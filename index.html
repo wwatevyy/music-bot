@@ -6,18 +6,15 @@
 <title>Музыка</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:#f4f0ff;--card:#fff;--tx:#241b3d;--hint:#8b80b0;--acc:#7c4dff;--soft:#e9e1ff;--sh:0 4px 18px rgba(92,60,200,.14)}
+:root{--bg:#f4f0ff;--card:#fff;--tx:#241b3d;--hint:#8b80b0;--acc:#7c4dff;--soft:#e9e1ff;--sh:0 4px 18px rgba(92,60,200,.14);--hd:#e3d8ff;--fg:#d6c6ff;--inp:#fff}
+:root[data-theme=dark]{--bg:#14111f;--card:#1e1a33;--tx:#f1ecff;--hint:#9a8fc0;--acc:#9d7bff;--soft:#2b2547;--sh:0 4px 18px rgba(0,0,0,.45);--hd:#201a38;--fg:#2d2350;--inp:#1e1a33;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 .ic{width:24px;height:24px;fill:currentColor}
 #app{display:flex;flex-direction:column;height:100%}
-header{padding:max(14px,env(safe-area-inset-top)) 14px 8px;background:linear-gradient(#e3d8ff,var(--bg))}
-h1{margin:0 0 10px;font-size:22px;font-weight:800;color:var(--acc)}
-.tabs{display:flex;gap:4px;background:var(--soft);border-radius:14px;padding:3px;margin-bottom:10px}
-.tabs button{flex:1;padding:8px 4px;border-radius:11px;color:var(--hint);font-weight:600;font-size:15px}
-.tabs button.on{background:var(--acc);color:#fff;box-shadow:var(--sh)}
-#q{width:100%;padding:11px 16px;border-radius:14px;border:0;background:#fff;color:var(--tx);font:inherit;outline:none;box-shadow:var(--sh)}
+header{padding:max(14px,env(safe-area-inset-top)) 14px 12px;background:linear-gradient(var(--hd),var(--bg))}
+#q{width:100%;padding:11px 16px;border-radius:14px;border:0;background:var(--inp);color:var(--tx);font:inherit;outline:none;box-shadow:var(--sh)}
 #q:focus-visible{box-shadow:0 0 0 2px var(--acc)}
 main{flex:1;overflow-y:auto;padding:6px 12px 120px}
 .row{display:flex;align-items:center;gap:12px;padding:8px;border-radius:16px;margin-bottom:4px;cursor:pointer}
@@ -43,7 +40,7 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
 .mrow img{width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--soft)}
 .bar{height:3px;background:var(--soft);border-radius:2px;margin-top:8px}
 .bar i{display:block;height:100%;width:0;background:var(--acc);border-radius:2px}
-#full{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;padding:max(14px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));background:linear-gradient(#d6c6ff,var(--bg) 65%);transform:translateY(100%);visibility:hidden;transition:transform .3s,visibility 0s .3s}
+#full{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;padding:max(14px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));background:linear-gradient(var(--fg),var(--bg) 65%);transform:translateY(100%);visibility:hidden;transition:transform .3s,visibility 0s .3s}
 #full.open{transform:none;visibility:visible;transition:transform .3s}
 .top{width:100%;display:flex;align-items:center;justify-content:space-between;color:var(--hint);font-weight:600}
 #fc{width:min(78vw,340px);aspect-ratio:1;border-radius:28px;object-fit:cover;background:var(--soft);box-shadow:0 18px 40px rgba(92,60,200,.35);margin:auto 0 24px}
@@ -55,28 +52,59 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
 .ctl{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:340px;margin:14px 0 auto}
 #dlg{display:none;position:fixed;inset:0;z-index:9;background:rgba(36,27,61,.45);align-items:center;justify-content:center;padding:20px}
 #dlg.show{display:flex}
-.box{background:#fff;border-radius:22px;padding:18px;width:100%;max-width:360px}
+.box{background:var(--card);border-radius:22px;padding:18px;width:100%;max-width:360px}
 .box h2{margin:0 0 12px;font-size:18px}
-.box input{width:100%;padding:11px 14px;border-radius:12px;border:2px solid var(--soft);font:inherit;margin-bottom:8px;outline:none;color:var(--tx)}
+.box input{width:100%;padding:11px 14px;border-radius:12px;border:2px solid var(--soft);font:inherit;margin-bottom:8px;outline:none;color:var(--tx);background:var(--inp)}
 .box input:focus{border-color:var(--acc)}
 .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 .btn{padding:10px 16px;border-radius:12px;font-weight:600;background:var(--soft)}
 .btn.p{background:var(--acc);color:#fff}
+.bar{display:flex;align-items:center;gap:6px;margin-bottom:20px}
+#title{font-size:22px;font-weight:800;color:var(--acc)}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
+#scrim.show{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:min(82vw,320px);background:var(--card);z-index:21;transform:translateX(-104%);transition:transform .28s;overflow-y:auto;border-radius:0 24px 24px 0;box-shadow:var(--sh)}
+#drawer.open{transform:none}
+.dh{padding:max(24px,env(safe-area-inset-top)) 20px 18px;background:linear-gradient(135deg,var(--acc),#b9a2ff);color:#fff;margin-bottom:10px}
+#av{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.28);display:grid;place-items:center;font-size:26px;font-weight:700;overflow:hidden;margin-bottom:12px}
+#av img{width:100%;height:100%;object-fit:cover}
+.dn{font-size:19px;font-weight:700}
+.du{opacity:.85;font-size:14px;min-height:20px}
+.di{display:flex;align-items:center;gap:20px;padding:13px 18px;margin:2px 10px;border-radius:26px;font-size:16px;text-align:left;width:calc(100% - 20px)}
+.di .ic{color:var(--hint)}
+.di.on{background:var(--soft);color:var(--acc);font-weight:600}
+.di.on .ic{color:var(--acc)}
+.sep{height:1px;background:var(--soft);margin:8px 22px}
+.set{padding:4px 6px}
+.sh{font-weight:700;margin:18px 0 8px;color:var(--acc)}
+.seg{display:flex;gap:4px;background:var(--soft);border-radius:14px;padding:3px}
+.seg button{flex:1;padding:10px;border-radius:11px;font-weight:600;color:var(--hint)}
+.seg button.on{background:var(--acc);color:#fff}
+.hint{color:var(--hint);margin:0}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <h1>Музыка</h1>
-    <div class="tabs">
-      <button id="tL" class="on">Библиотека</button>
-      <button id="tS">Поиск</button>
-      <button id="tF">Моё</button>
+    <div class="bar">
+      <button class="cb" id="menu" aria-label="Меню"><svg class="ic" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+      <div id="title">Моя музыка</div>
     </div>
     <input id="q" type="search" placeholder="Поиск по библиотеке" autocomplete="off">
   </header>
   <main id="list"></main>
 </div>
+
+<div id="scrim"></div>
+<nav id="drawer">
+  <div class="dh"><div id="av"></div><div class="dn" id="dname"></div><div class="du" id="duser"></div></div>
+  <button class="di on" data-go="lib"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>Моя музыка</button>
+  <button class="di" data-go="search"><svg class="ic" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>Поиск</button>
+  <button class="di" data-go="popular"><svg class="ic" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>Популярное</button>
+  <button class="di" data-go="fav"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>Избранное</button>
+  <div class="sep"></div>
+  <button class="di" data-go="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>Настройки</button>
+</nav>
 
 <div id="mini">
   <div class="mrow">
@@ -123,13 +151,20 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
 const CLIENT_ID = 'a90ebb1e';
 const API = 'https://music-api.ivankashiro75.workers.dev';
 const tg = window.Telegram && Telegram.WebApp;
-if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor('#e3d8ff'); tg.setBackgroundColor('#f4f0ff'); } catch (e) {} }
+if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} try { tg.disableVerticalSwipes(); } catch (e) {} }
+let theme = 'light';
+function applyTheme(v) {
+  theme = v === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = theme;
+  if (tg) { try { tg.setHeaderColor(theme === 'dark' ? '#201a38' : '#e3d8ff'); tg.setBackgroundColor(theme === 'dark' ? '#14111f' : '#f4f0ff'); } catch (e) {} }
+}
+try { applyTheme(localStorage.getItem('theme') || 'light'); } catch (e) { applyTheme('light'); }
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = s => { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const UNK = 'Неизвестный исполнитель';
-const NOCOVER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" fill="#e9e1ff"/><path d="M20 15v14.2a4 4 0 1 0 2 3.5V19h8v-4z" fill="#a78bfa"/></svg>');
+const NOCOVER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" fill="#8b80b0" fill-opacity=".25"/><path d="M20 15v14.2a4 4 0 1 0 2 3.5V19h8v-4z" fill="#a78bfa"/></svg>');
 const heartSvg = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3 5 6.5 5c2 0 3.6 1.1 5.5 3 1.9-1.9 3.5-3 5.5-3 3.5 0 5.3 3.6 4 6.8C19.5 16.4 12 21 12 21z"/></svg>';
 const trashSvg = '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
 
@@ -160,7 +195,7 @@ function sDel(k) {
 
 /* Состояние */
 const D = encodeURIComponent((tg && tg.initData) || '');
-let tab = 'lib', results = [], favs = [], lib = [], libState = 'idle';
+let tab = 'lib', results = [], favs = [], lib = [], libState = 'idle', popular = [], popState = 'idle';
 let queue = [], idx = -1, hist = [], errs = 0, reqId = 0, seeking = false;
 let shuffle = false, repeat = false;
 const audio = new Audio();
@@ -184,23 +219,32 @@ async function toggleFav(t) {
   if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {} }
 }
 
-/* Поиск Jamendo */
+/* Jamendo */
+async function jam(extra) {
+  const base = 'https://api.jamendo.com/v3.0/tracks/?client_id=' + CLIENT_ID + '&format=json&limit=40&imagesize=200&audioformat=mp32';
+  const j = await (await fetch(base + extra)).json();
+  return (j.results || []).filter(t => t.audio).map(slim);
+}
 async function search(q) {
   const my = ++reqId;
-  $('list').innerHTML = '<div class="msg">Ищу…</div>';
-  const base = 'https://api.jamendo.com/v3.0/tracks/?client_id=' + CLIENT_ID + '&format=json&limit=40&imagesize=200&audioformat=mp32';
-  const url = q ? base + '&search=' + encodeURIComponent(q) : base + '&order=popularity_week';
+  if (!q) { results = []; render(); return; }
+  if (tab === 'search') $('list').innerHTML = '<div class="msg">Ищу…</div>';
   try {
-    const j = await (await fetch(url)).json();
+    const r = await jam('&search=' + encodeURIComponent(q));
     if (my !== reqId) return;
-    results = (j.results || []).filter(t => t.audio).map(slim);
+    results = r;
   } catch (e) {
     if (my !== reqId) return;
     results = [];
-    $('list').innerHTML = '<div class="msg">Не получилось загрузить. Проверьте интернет и попробуйте ещё раз.</div>';
+    if (tab === 'search') $('list').innerHTML = '<div class="msg">Не получилось загрузить. Проверьте интернет и попробуйте ещё раз.</div>';
     return;
   }
-  render(q ? 'Ничего не нашлось. Попробуйте другое название.' : '');
+  render('Ничего не нашлось. Попробуйте другое название.');
+}
+async function loadPopular() {
+  popState = 'loading'; render();
+  try { popular = await jam('&order=popularity_month'); popState = 'ok'; } catch (e) { popState = 'error'; }
+  render();
 }
 
 /* Библиотека (ваши mp3) */
@@ -231,6 +275,8 @@ async function delTrack(t) {
 
 /* Список */
 function current() {
+  if (tab === 'popular') return popular;
+  if (tab === 'settings') return [];
   if (tab === 'fav') return favs;
   if (tab === 'lib') {
     const f = $('q').value.trim().toLowerCase();
@@ -239,11 +285,14 @@ function current() {
   return results;
 }
 function render(emptyMsg) {
+  if (tab === 'settings') { renderSettings(); return; }
   const data = current(), el = $('list');
   const curId = queue[idx] ? queue[idx].id : null;
   if (!data.length) {
     let m = emptyMsg || '';
     if (tab === 'fav') m = 'Здесь появятся песни из поиска, которые вы отметили сердечком.';
+    if (tab === 'search') m = $('q').value.trim() ? (emptyMsg || 'Ничего не нашлось.') : 'Введите название трека или исполнителя.';
+    if (tab === 'popular') m = popState === 'loading' ? 'Загружаю…' : 'Не удалось загрузить. Попробуйте ещё раз.';
     if (tab === 'lib') m = libState === 'loading' ? 'Загружаю…'
       : libState === 'noauth' ? 'Откройте приложение через бота в Telegram.'
       : libState === 'error' ? 'Не удалось загрузить библиотеку. Проверьте интернет и откройте вкладку ещё раз.'
@@ -259,10 +308,12 @@ function render(emptyMsg) {
       (t.lib
         ? '<button class="ib" data-del="' + i + '" aria-label="Удалить">' + trashSvg + '</button>'
         : '<button class="ib' + (isFav(t.id) ? ' on' : '') + '" data-fav="' + i + '" aria-label="В избранное">' + heartSvg + '</button>') +
-    '</div>').join('') + (tab === 'search' ? '<div class="credit">Музыка: Jamendo</div>' : '');
+    '</div>').join('') + (tab === 'search' || tab === 'popular' ? '<div class="credit">Музыка: Jamendo</div>' : '');
 }
 $('list').addEventListener('click', e => {
   const data = current();
+  const th = e.target.closest('[data-theme]');
+  if (th) { setTheme(th.dataset.theme); return; }
   const d = e.target.closest('[data-del]');
   if (d) { delTrack(data[+d.dataset.del]); return; }
   const f = e.target.closest('[data-fav]');
@@ -362,22 +413,64 @@ $('esave').onclick = async () => {
   try { await fetch(API + '/api/edit?id=' + encodeURIComponent(t.rid) + '&t=' + encodeURIComponent(n) + '&a=' + encodeURIComponent(a) + '&d=' + D, { method: 'POST' }); } catch (e) {}
 };
 
-/* Вкладки и поиск */
-function setTab(t) {
-  tab = t;
-  $('tL').classList.toggle('on', t === 'lib');
-  $('tS').classList.toggle('on', t === 'search');
-  $('tF').classList.toggle('on', t === 'fav');
-  $('q').style.display = t === 'fav' ? 'none' : '';
-  $('q').placeholder = t === 'lib' ? 'Поиск по библиотеке' : 'Трек или исполнитель';
+/* Меню, разделы, тема */
+const TITLES = { lib: 'Моя музыка', search: 'Поиск', popular: 'Популярное', fav: 'Избранное', settings: 'Настройки' };
+const PH = { lib: 'Поиск по библиотеке', search: 'Трек или исполнитель' };
+function go(v) {
+  tab = v;
+  $('title').textContent = TITLES[v];
+  document.querySelectorAll('.di').forEach(b => b.classList.toggle('on', b.dataset.go === v));
+  $('q').style.display = PH[v] ? '' : 'none';
+  if (PH[v]) $('q').placeholder = PH[v];
   $('q').value = '';
-  if (t === 'lib') loadLib();
-  if (t === 'search' && !results.length) search('');
+  closeDrawer();
+  if (v === 'lib') loadLib();
+  if (v === 'popular' && !popular.length) loadPopular();
+  render();
+  $('list').scrollTop = 0;
+}
+function openDrawer() { $('drawer').classList.add('open'); $('scrim').classList.add('show'); }
+function closeDrawer() { $('drawer').classList.remove('open'); $('scrim').classList.remove('show'); }
+$('menu').onclick = openDrawer;
+$('scrim').onclick = closeDrawer;
+document.querySelectorAll('.di').forEach(b => { b.onclick = () => go(b.dataset.go); });
+
+let sx = 0, sy = 0, sOk = false;
+document.addEventListener('touchstart', e => {
+  const t = e.touches[0]; sx = t.clientX; sy = t.clientY;
+  sOk = !e.target.closest('input,#dlg');
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  if (!sOk) return;
+  const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+  if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+  const open = $('drawer').classList.contains('open');
+  if (dx > 0 && !open && !$('full').classList.contains('open')) openDrawer();
+  else if (dx < 0 && open) closeDrawer();
+}, { passive: true });
+
+const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+const uname = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : 'Гость';
+$('dname').textContent = uname;
+$('duser').textContent = u && u.username ? '@' + u.username : '';
+if (u && u.photo_url) $('av').innerHTML = '<img alt="" src="' + esc(u.photo_url) + '">';
+else $('av').textContent = uname.charAt(0).toUpperCase();
+
+function setTheme(v) {
+  applyTheme(v);
+  try { localStorage.setItem('theme', theme); } catch (e) {}
+  sSet('theme', theme);
   render();
 }
-$('tL').onclick = () => setTab('lib');
-$('tS').onclick = () => setTab('search');
-$('tF').onclick = () => setTab('fav');
+function renderSettings() {
+  const b = (v, l) => '<button data-theme="' + v + '" class="' + (theme === v ? 'on' : '') + '">' + l + '</button>';
+  $('list').innerHTML = '<div class="set">' +
+    '<div class="sh">Тема</div><div class="seg">' + b('light', 'Светлая') + b('dark', 'Тёмная') + '</div>' +
+    '<div class="sh">Как добавить песни</div><p class="hint">Перешлите mp3-файлы боту в личные сообщения. Они появятся в «Моя музыка» примерно через минуту.</p>' +
+    '<div class="sh">Об источниках</div><p class="hint">«Поиск» и «Популярное» работают на музыке Jamendo со свободными лицензиями.</p>' +
+    '</div>';
+}
+
 let timer;
 $('q').addEventListener('input', () => {
   clearTimeout(timer);
@@ -388,7 +481,8 @@ $('q').addEventListener('keydown', e => {
   if (e.key === 'Enter') { clearTimeout(timer); if (tab === 'search') search($('q').value.trim()); $('q').blur(); }
 });
 
-loadLib();
+sGet('theme').then(v => { if (v && v !== theme) { applyTheme(v); render(); } });
+go('lib');
 loadFavs();
 </script>
 </body>
