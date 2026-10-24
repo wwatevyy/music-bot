@@ -55,6 +55,7 @@ main{flex:1;overflow-y:auto;padding:4px 14px 16px}
   <header>
     <div class="tabs">
       <button id="tS" class="on">Поиск</button>
+      <button id="tL">Библиотека</button>
       <button id="tF">Моё</button>
     </div>
     <input id="q" type="search" placeholder="Трек или исполнитель" autocomplete="off">
@@ -120,6 +121,35 @@ let tab = 'search';
 let queue = [];     // текущая очередь
 let idx = -1;
 let reqId = 0;
+const API = 'https://music-api.ivankashiro75.workers.dev';
+const D = encodeURIComponent((tg && tg.initData) || '');
+let lib = [], libState = 'idle';
+const NOCOVER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" fill="#8884"/><path d="M20 15v14.2a4 4 0 1 0 2 3.5V19h8v-4z" fill="#888"/></svg>');
+const trashSvg = '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+async function loadLib() {
+  if (!D) { libState = 'noauth'; render(); return; }
+  libState = 'loading'; render();
+  try {
+    const r = await fetch(API + '/api/tracks?d=' + D);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    lib = j.tracks.map(t => ({
+      id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || 'Неизвестный исполнитель',
+      image: '', audio: API + '/api/audio/' + encodeURIComponent(t.id) + '?d=' + D, dur: t.dur, lib: true
+    }));
+    libState = 'ok';
+  } catch (e) { libState = 'error'; }
+  render();
+}
+async function delTrack(t) {
+  const q = 'Удалить «' + t.name + '» из библиотеки?';
+  const ok = await new Promise(r => { try { tg.showConfirm(q, r); } catch (e) { r(confirm(q)); } });
+  if (!ok) return;
+  try { await fetch(API + '/api/delete?id=' + encodeURIComponent(t.rid) + '&d=' + D, { method: 'POST' }); } catch (e) {}
+  lib = lib.filter(x => x.id !== t.id);
+  render();
+}
 const audio = new Audio();
 audio.preload = 'none';
 
@@ -170,25 +200,36 @@ async function search(q) {
 /* ---------- Отрисовка ---------- */
 const heartSvg = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3 5 6.5 5c2 0 3.6 1.1 5.5 3 1.9-1.9 3.5-3 5.5-3 3.500 0 5.300 3.600 4 6.800C19.500 16.400 12 21 12 21z"/></svg>';
 function render(emptyMsg) {
-  const data = tab === 'search' ? results : favs;
+  const data = current();
   const el = $('list');
   const curId = queue[idx] ? queue[idx].id : null;
   if (!data.length) {
-    el.innerHTML = '<div class="msg">' + esc(tab === 'fav' ? 'Здесь появятся песни, которые вы отметили сердечком.' : (emptyMsg || '')) + '</div>';
+    let m = emptyMsg || '';
+    if (tab === 'fav') m = 'Здесь появятся песни, которые вы отметили сердечком.';
+    if (tab === 'lib') m = libState === 'loading' ? 'Загружаю…'
+      : libState === 'noauth' ? 'Откройте приложение через бота в Telegram.'
+      : libState === 'error' ? 'Не удалось загрузить библиотеку. Проверьте интернет и откройте вкладку ещё раз.'
+      : lib.length ? 'Ничего не нашлось.'
+      : 'Библиотека пуста. Перешлите mp3-файлы боту, и они появятся здесь.';
+    el.innerHTML = '<div class="msg">' + esc(m) + '</div>';
     return;
   }
   el.innerHTML = data.map((t, i) =>
     '<div class="row' + (t.id === curId ? ' cur' : '') + '" data-i="' + i + '">' +
-      '<img class="cv" loading="lazy" alt="" src="' + esc(t.image) + '">' +
+      '<img class="cv" loading="lazy" alt="" src="' + esc(t.image || NOCOVER) + '">' +
       '<button class="tx" data-play="' + i + '"><div class="t">' + esc(t.name) + '</div><div class="s">' + esc(t.artist) + (t.dur ? ' · ' + fmt(t.dur) : '') + '</div></button>' +
-      '<button class="heart' + (isFav(t.id) ? ' on' : '') + '" data-fav="' + i + '" aria-label="В избранное">' + heartSvg + '</button>' +
+      (t.lib
+        ? '<button class="heart" data-del="' + i + '" aria-label="Удалить">' + trashSvg + '</button>'
+        : '<button class="heart' + (isFav(t.id) ? ' on' : '') + '" data-fav="' + i + '" aria-label="В избранное">' + heartSvg + '</button>') +
     '</div>').join('') + (tab === 'search' ? '<div class="credit">Музыка: Jamendo</div>' : '');
 }
 
 $('list').addEventListener('click', e => {
-  const data = tab === 'search' ? results : favs;
+  const data = current();
   const p = e.target.closest('[data-play]');
   if (p) { play(data, +p.dataset.play); return; }
+  const d = e.target.closest('[data-del]');
+  if (d) { delTrack(data[+d.dataset.del]); return; }
   const f = e.target.closest('[data-fav]');
   if (f) toggleFav(data[+f.dataset.fav]);
 });
@@ -203,10 +244,10 @@ function load() {
   audio.src = t.audio;
   audio.play().catch(() => {});
   $('bar').classList.add('show');
-  $('pc').src = t.image; $('pt').textContent = t.name; $('pa').textContent = t.artist;
+  $('pc').src = t.image || NOCOVER; $('pt').textContent = t.name; $('pa').textContent = t.artist;
   $('seek').value = 0; $('cur').textContent = '0:00'; $('dur').textContent = fmt(t.dur);
   if ('mediaSession' in navigator) {
-    try { navigator.mediaSession.metadata = new MediaMetadata({ title: t.name, artist: t.artist, artwork: [{ src: t.image }] }); } catch (e) {}
+    try { navigator.mediaSession.metadata = new MediaMetadata({ title: t.name, artist: t.artist, artwork: t.image ? [{ src: t.image }] : [] }); } catch (e) {}
   }
   render();
 }
@@ -243,21 +284,41 @@ if ('mediaSession' in navigator) {
 }
 
 /* ---------- Вкладки и поиск ---------- */
+function current() {
+  if (tab === 'fav') return favs;
+  if (tab === 'lib') {
+    const f = $('q').value.trim().toLowerCase();
+    return f ? lib.filter(t => (t.name + ' ' + t.artist).toLowerCase().includes(f)) : lib;
+  }
+  return results;
+}
 function setTab(t) {
   tab = t;
   $('tS').classList.toggle('on', t === 'search');
+  $('tL').classList.toggle('on', t === 'lib');
   $('tF').classList.toggle('on', t === 'fav');
-  $('q').style.display = t === 'search' ? '' : 'none';
+  $('q').style.display = t === 'fav' ? 'none' : '';
+  $('q').placeholder = t === 'lib' ? 'Поиск по библиотеке' : 'Трек или исполнитель';
+  $('q').value = '';
+  if (t === 'lib') loadLib();
   render();
 }
 $('tS').onclick = () => setTab('search');
+$('tL').onclick = () => setTab('lib');
 $('tF').onclick = () => setTab('fav');
 let timer;
-$('q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => search($('q').value.trim()), 450); });
-$('q').addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(timer); search($('q').value.trim()); $('q').blur(); } });
+$('q').addEventListener('input', () => {
+  clearTimeout(timer);
+  if (tab === 'lib') { render(); return; }
+  timer = setTimeout(() => search($('q').value.trim()), 450);
+});
+$('q').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { clearTimeout(timer); if (tab === 'search') search($('q').value.trim()); $('q').blur(); }
+});
 
 search('');
 loadFavs();
+loadLib();
 </script>
 </body>
 </html>
