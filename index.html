@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Музыка</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7c4dff">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#f4f0ff;--card:#fff;--tx:#241b3d;--hint:#8b80b0;--acc:#7c4dff;--soft:#e9e1ff;--sh:0 4px 18px rgba(92,60,200,.14);--hd:#e3d8ff;--fg:#d6c6ff;--inp:#fff}
@@ -103,6 +107,14 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
 .pcov{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .pcov img{width:72px;height:72px;border-radius:14px;object-fit:cover;background:var(--soft)}
 .btn.dg{color:#ef4466;margin-right:auto}
+#login{display:none;position:fixed;inset:0;z-index:60;background:linear-gradient(var(--fg),var(--bg));flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+#login.show{display:flex}
+#login img{width:104px;height:104px;border-radius:26px;box-shadow:var(--sh);margin-bottom:22px}
+#login h2{margin:0 0 8px;font-size:26px;color:var(--acc)}
+#login p{color:var(--hint);margin:0 0 22px;max-width:300px}
+#lbtn{background:var(--acc);color:#fff;font-weight:700;padding:14px 28px;border-radius:18px;box-shadow:var(--sh)}
+#llink{display:none;margin-top:16px;color:var(--acc);font-weight:600}
+#lstatus{margin-top:16px;color:var(--hint);font-size:14px;min-height:20px;max-width:300px}
 </style>
 </head>
 <body>
@@ -161,6 +173,15 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
     <button class="cb" id="rp" aria-label="Повтор"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></svg></button>
   </div>
 </section>
+
+<div id="login">
+  <img src="icon-192.png" alt="">
+  <h2>Музыка</h2>
+  <p>Войдите через Telegram, чтобы открыть вашу библиотеку и плейлисты.</p>
+  <button id="lbtn">Войти через Telegram</button>
+  <a id="llink" target="_blank" rel="noopener">Не открылось? Нажмите сюда</a>
+  <div id="lstatus"></div>
+</div>
 
 <div id="pld">
   <div class="box">
@@ -231,7 +252,11 @@ function sDel(k) {
 }
 
 /* Состояние */
-const D = encodeURIComponent((tg && tg.initData) || '');
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
+const inTg = !!(tg && tg.initData);
+let D = encodeURIComponent((tg && tg.initData) || lsGet('tok') || '');
 let tab = 'lib', results = [], favs = [], lib = [], libState = 'idle', popular = [], popState = 'idle';
 let queue = [], idx = -1, hist = [], errs = 0, reqId = 0, seeking = false;
 let upNext = [], order = [], played = new Set();
@@ -407,6 +432,7 @@ function doAct(a) {
   else if (a === 'back') go('playlists');
   else if (a === 'newpl') openPlDlg(null);
   else if (a === 'editpl') openPlDlg(curPl);
+  else if (a === 'logout') logout();
 }
 function openSheet(title, items) {
   sheetItems = items;
@@ -671,7 +697,7 @@ document.addEventListener('touchend', e => {
 }, { passive: true });
 
 const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-const uname = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : 'Гость';
+const uname = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : (lsGet('uname') || 'Гость');
 $('dname').textContent = uname;
 $('duser').textContent = u && u.username ? '@' + u.username : '';
 if (u && u.photo_url) $('av').innerHTML = '<img alt="" src="' + esc(u.photo_url) + '">';
@@ -688,6 +714,7 @@ function renderSettings() {
   $('list').innerHTML = '<div class="set">' +
     '<div class="sh">Тема</div><div class="seg">' + b('light', 'Светлая') + b('dark', 'Тёмная') + '</div>' +
     '<div class="sh">Как добавить песни</div><p class="hint">Перешлите mp3-файлы боту в личные сообщения. Они появятся в «Моя музыка» примерно через минуту.</p>' +
+    (!inTg && lsGet('tok') ? '<div class="sh">Аккаунт</div><p class="hint" style="margin-bottom:10px">Вы вошли как ' + esc(lsGet('uname') || 'пользователь Telegram') + '</p><button class="btn" data-act="logout">Выйти</button>' : '') +
     '<div class="sh">Об источниках</div><p class="hint">«Поиск» и «Популярное» работают на музыке Jamendo со свободными лицензиями.</p>' +
     '</div>';
 }
@@ -703,6 +730,37 @@ $('q').addEventListener('keydown', e => {
 });
 
 sGet('theme').then(v => { if (v && v !== theme) { applyTheme(v); render(); } });
+/* Вход через Telegram (вне Telegram) */
+async function logout() {
+  if (!(await ask('Выйти из аккаунта на этом устройстве?'))) return;
+  try { await fetch(API + '/auth/logout?d=' + encodeURIComponent(lsGet('tok') || ''), { method: 'POST' }); } catch (e) {}
+  lsDel('tok'); lsDel('uname'); location.reload();
+}
+async function startLogin() {
+  const st = $('lstatus');
+  st.textContent = 'Создаю ссылку для входа…';
+  let j;
+  try { j = await (await fetch(API + '/auth/start', { method: 'POST' })).json(); }
+  catch (e) { st.textContent = 'Нет связи с сервером. Проверьте интернет.'; return; }
+  if (!j.bot) { st.textContent = 'Сервер не смог создать ссылку. Попробуйте позже.'; return; }
+  const link = 'https://t.me/' + j.bot + '?start=login_' + j.code;
+  $('llink').href = link; $('llink').style.display = 'block';
+  window.open(link, '_blank');
+  st.textContent = 'В Telegram нажмите Start, затем «Подтвердить вход». Я подожду.';
+  for (let i = 0; i < 300; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const c = await (await fetch(API + '/auth/check?code=' + encodeURIComponent(j.code))).json();
+      if (c.token) { lsSet('tok', c.token); lsSet('uname', c.name || ''); location.reload(); return; }
+      if (c.expired) break;
+    } catch (e) {}
+  }
+  st.textContent = 'Время вышло. Нажмите «Войти через Telegram» ещё раз.';
+}
+$('lbtn').onclick = startLogin;
+if (!D) $('login').classList.add('show');
+if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+
 go('lib');
 loadFavs();
 loadPlaylists();
