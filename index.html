@@ -115,6 +115,13 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
 #lbtn{background:var(--acc);color:#fff;font-weight:700;padding:14px 28px;border-radius:18px;box-shadow:var(--sh)}
 #llink{display:none;margin-top:16px;color:var(--acc);font-weight:600}
 #lstatus{margin-top:16px;color:var(--hint);font-size:14px;min-height:20px;max-width:300px}
+html,body,main{overscroll-behavior-y:contain}
+#qhint{display:none;color:var(--hint);font-size:13px;padding:8px 6px 0}
+#qhint.show{display:block}
+#ptr{position:fixed;top:max(8px,env(safe-area-inset-top));left:50%;width:38px;height:38px;border-radius:50%;background:var(--card);box-shadow:var(--sh);display:grid;place-items:center;color:var(--acc);z-index:25;opacity:0;pointer-events:none;transform:translate(-50%,-50px)}
+#ptr svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+#ptr.spin svg{animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -125,6 +132,7 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
       <div id="title">Моя музыка</div>
     </div>
     <input id="q" type="search" placeholder="Поиск по библиотеке" autocomplete="off">
+    <div id="qhint">Показаны популярные песни. Начните вводить запрос, чтобы искать.</div>
   </header>
   <main id="list"></main>
 </div>
@@ -134,9 +142,7 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
   <div class="dh"><div id="av"></div><div class="dn" id="dname"></div><div class="du" id="duser"></div></div>
   <button class="di on" data-go="lib"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>Моя музыка</button>
   <button class="di" data-go="playlists"><svg class="ic" viewBox="0 0 24 24"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>Плейлисты</button>
-  <button class="di" data-go="search"><svg class="ic" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>Поиск</button>
-  <button class="di" data-go="popular"><svg class="ic" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>Популярное</button>
-  <button class="di" data-go="fav"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>Избранное</button>
+  <button class="di" data-go="search"><svg class="ic" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Поиск</button>
   <div class="sep"></div>
   <button class="di" data-go="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>Настройки</button>
 </nav>
@@ -196,6 +202,7 @@ main{flex:1;overflow-y:auto;padding:6px 12px 120px}
 
 <div id="sov"><div id="spanel"></div></div>
 <div id="toast"></div>
+<div id="ptr"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4.5h-4.5"/></svg></div>
 
 <div id="dlg">
   <div class="box">
@@ -258,7 +265,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
 const inTg = !!(tg && tg.initData);
 let D = encodeURIComponent((tg && tg.initData) || lsGet('tok') || '');
-let tab = 'lib', results = [], favs = [], lib = [], libState = 'idle', popular = [], popState = 'idle';
+let tab = 'lib', results = [], lib = [], libState = 'idle', popular = [], popState = 'idle';
 let queue = [], idx = -1, hist = [], errs = 0, reqId = 0, seeking = false;
 let upNext = [], order = [], played = new Set();
 let playlists = [], plState = 'idle', curPl = null, pendingCover = null, pendingAdd = null, plEditId = null, sheetItems = [];
@@ -266,22 +273,39 @@ let shuffle = false, repeat = false;
 const audio = new Audio();
 audio.preload = 'none';
 const slim = t => ({ id: String(t.id), name: t.name, artist: t.artist_name || t.artist, image: t.image, audio: t.audio, dur: t.duration || t.dur });
-const isFav = id => favs.some(f => f.id === String(id));
+const SITE_ICON = 'https://wwatevyy.github.io/music-bot/icon-192.png';
 
-/* Избранное (Jamendo) */
-async function loadFavs() {
-  const ids = (await sGet('favs') || '').split(',').filter(Boolean);
-  const items = await Promise.all(ids.map(async id => { try { return JSON.parse(await sGet('t' + id)); } catch (e) { return null; } }));
-  favs = items.filter(Boolean);
+/* Песни из поиска сохраняются в «Моей музыке» */
+const inLib = t => lib.some(x => x.ext && x.rid === 'jm' + t.id);
+async function toggleExt(t) {
+  if (!t) return;
+  if (!D) { toast('Войдите, чтобы сохранять песни'); return; }
+  const rid = 'jm' + t.id;
+  if (inLib(t)) {
+    if (!(await ask('Убрать «' + t.name + '» из «Моей музыки»?'))) return;
+    lib = lib.filter(x => x.rid !== rid); render();
+    try { await fetch(API + '/api/delete?id=' + encodeURIComponent(rid) + '&d=' + D, { method: 'POST' }); } catch (e) {}
+    return;
+  }
+  lib.unshift({ id: 'L' + rid, rid, name: t.name, artist: t.artist || UNK, image: t.image || '', audio: t.audio, dur: t.dur, lib: true, ext: true });
   render();
-}
-async function toggleFav(t) {
-  t = slim(t);
-  if (isFav(t.id)) { favs = favs.filter(f => f.id !== t.id); await sDel('t' + t.id); }
-  else { favs.unshift(t); await sSet('t' + t.id, JSON.stringify(t)); }
-  await sSet('favs', favs.map(f => f.id).join(','));
-  render();
+  toast('Добавлено в «Мою музыку»');
+  const body = JSON.stringify({ id: t.id, name: t.name, artist: t.artist, image: t.image, audio: t.audio, dur: t.dur });
+  try { await apiPost('/api/ext/add', body, ''); } catch (e) { toast('Не удалось сохранить'); }
   if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {} }
+}
+async function migrateFavs() {
+  if (lsGet('favmig') || !D) return;
+  lsSet('favmig', '1');
+  const ids = (await sGet('favs') || '').split(',').filter(Boolean);
+  for (const id of ids) {
+    let t = null;
+    try { t = JSON.parse(await sGet('t' + id)); } catch (e) {}
+    if (!t || !t.audio) continue;
+    const body = JSON.stringify({ id: t.id, name: t.name, artist: t.artist, image: t.image, audio: t.audio, dur: t.dur });
+    try { await apiPost('/api/ext/add', body, ''); } catch (e) {}
+  }
+  if (ids.length) { toast('Избранное перенесено в «Мою музыку»'); loadLib(); }
 }
 
 /* Jamendo */
@@ -320,14 +344,17 @@ async function loadLib() {
     const r = await fetch(API + '/api/tracks?d=' + D);
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
-    lib = j.tracks.map(t => ({
-      id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || UNK, lib: true, dur: t.dur,
-      image: t.cover ? API + '/api/cover/' + encodeURIComponent(t.id) + '?d=' + D : '',
-      audio: API + '/api/audio/' + encodeURIComponent(t.id) + '?d=' + D
-    }));
+    lib = j.tracks.map(t => t.ext
+      ? { id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || UNK, lib: true, ext: true, dur: t.dur, image: t.image || '', audio: t.audio }
+      : {
+        id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || UNK, lib: true, dur: t.dur,
+        image: t.cover ? API + '/api/cover/' + encodeURIComponent(t.id) + '?d=' + D : '',
+        audio: API + '/api/audio/' + encodeURIComponent(t.id) + '?d=' + D
+      });
     libState = 'ok';
   } catch (e) { libState = 'error'; }
   render();
+  if (libState === 'ok') migrateFavs();
 }
 async function delTrack(t) {
   const q = 'Удалить «' + t.name + '» из библиотеки?';
@@ -351,9 +378,7 @@ const playIc = '<svg class="ic" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></s
 const shufIc = '<svg class="ic" viewBox="0 0 24 24"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>';
 
 function current() {
-  if (tab === 'popular') return popular;
-  if (tab === 'fav') return favs;
-  if (tab === 'search') return results;
+  if (tab === 'search') return $('q').value.trim() ? results : popular;
   if (tab === 'pl') { const p = curPlObj(); return p ? plTracks(p) : []; }
   if (tab === 'lib') {
     const f = $('q').value.trim().toLowerCase();
@@ -362,15 +387,16 @@ function current() {
   return [];
 }
 function emptyText(emptyMsg) {
-  if (tab === 'fav') return 'Здесь появятся песни из поиска, которые вы отметили сердечком.';
-  if (tab === 'search') return $('q').value.trim() ? (emptyMsg || 'Ничего не нашлось.') : 'Введите название трека или исполнителя.';
-  if (tab === 'popular') return popState === 'loading' ? 'Загружаю…' : 'Не удалось загрузить. Попробуйте ещё раз.';
+  if (tab === 'search') {
+    if ($('q').value.trim()) return emptyMsg || 'Ничего не нашлось.';
+    return popState === 'loading' ? 'Загружаю…' : 'Не удалось загрузить. Попробуйте ещё раз.';
+  }
   if (tab === 'pl') return libState === 'loading' ? 'Загружаю…' : 'В плейлисте пока нет песен. Добавьте их через ⋯ у песни в «Моей музыке».';
   return libState === 'loading' ? 'Загружаю…'
     : libState === 'noauth' ? 'Откройте приложение через бота в Telegram.'
     : libState === 'error' ? 'Не удалось загрузить библиотеку. Проверьте интернет и откройте вкладку ещё раз.'
     : lib.length ? 'Ничего не нашлось.'
-    : 'Библиотека пуста. Перешлите mp3-файлы боту, и они появятся здесь.';
+    : 'Библиотека пуста. Перешлите mp3-файлы боту или сохраните песни из поиска, и они появятся здесь.';
 }
 function renderPlaylists() {
   let h = '<div class="row add" data-act="newpl"><div class="cv">' + plusSvg + '</div><div class="tx"><div class="t">Новый плейлист</div></div></div>';
@@ -381,6 +407,7 @@ function renderPlaylists() {
   $('list').innerHTML = h;
 }
 function render(emptyMsg) {
+  $('qhint').classList.toggle('show', tab === 'search' && !$('q').value.trim());
   if (tab === 'settings') { renderSettings(); return; }
   if (tab === 'playlists') { renderPlaylists(); return; }
   const p = tab === 'pl' ? curPlObj() : null;
@@ -396,8 +423,8 @@ function render(emptyMsg) {
       '<div class="tx"><div class="t">' + esc(t.name) + '</div><div class="s">' + esc(t.artist) + (t.dur ? ' · ' + fmt(t.dur) : '') + '</div></div>' +
       (t.lib
         ? '<button class="ib" data-more="' + i + '" aria-label="Действия">' + dotsSvg + '</button>'
-        : '<button class="ib' + (isFav(t.id) ? ' on' : '') + '" data-fav="' + i + '" aria-label="В избранное">' + heartSvg + '</button>') +
-    '</div>').join('') + (tab === 'search' || tab === 'popular' ? '<div class="credit">Музыка: Jamendo</div>' : '');
+        : '<button class="ib' + (inLib(t) ? ' on' : '') + '" data-fav="' + i + '" aria-label="В Мою музыку">' + heartSvg + '</button>') +
+    '</div>').join('') + (tab === 'search' ? '<div class="credit">Музыка: Jamendo</div>' : '');
 }
 $('list').addEventListener('click', e => {
   const th = e.target.closest('[data-tm]');
@@ -410,7 +437,7 @@ $('list').addEventListener('click', e => {
   const m = e.target.closest('[data-more]');
   if (m) { showMenu(data[+m.dataset.more]); return; }
   const f = e.target.closest('[data-fav]');
-  if (f) { toggleFav(data[+f.dataset.fav]); return; }
+  if (f) { toggleExt(data[+f.dataset.fav]); return; }
   const r = e.target.closest('.row');
   if (r && r.dataset.i != null) play(data, +r.dataset.i);
 });
@@ -422,14 +449,23 @@ function toast(m) {
   const el = $('toast'); el.textContent = m; el.classList.add('show');
   clearTimeout(tmr); tmr = setTimeout(() => el.classList.remove('show'), 1900);
 }
+function saveModes() { const m = JSON.stringify({ shuffle, repeat }); lsSet('modes', m); sSet('modes', m); }
+function restoreModes(v) {
+  try {
+    const m = JSON.parse(v);
+    shuffle = !!m.shuffle; repeat = !!m.repeat; audio.loop = repeat;
+    $('sh').classList.toggle('on', shuffle); $('rp').classList.toggle('on', repeat);
+  } catch (e) {}
+}
 function setShuffle(v) {
   shuffle = v; $('sh').classList.toggle('on', v);
   if (v && queue.length) buildOrder(); else order = [];
+  saveModes();
 }
 function doAct(a) {
   const data = current();
   if (a === 'playall' && data.length) { setShuffle(false); play(data, 0); }
-  else if (a === 'shuf' && data.length) { shuffle = true; $('sh').classList.add('on'); play(data, Math.floor(Math.random() * data.length)); }
+  else if (a === 'shuf' && data.length) { setShuffle(true); play(data, Math.floor(Math.random() * data.length)); }
   else if (a === 'back') go('playlists');
   else if (a === 'newpl') openPlDlg(null);
   else if (a === 'editpl') openPlDlg(curPl);
@@ -558,9 +594,12 @@ function play(list, i) {
   if (shuffle) buildOrder();
   load();
 }
+let failed = null;
 function load() {
   const t = queue[idx]; if (!t) return;
-  played.add(t);
+  played.add(t); failed = null;
+  audio.pause();
+  audio.muted = true;
   audio.src = t.audio; audio.loop = repeat;
   audio.play().catch(() => {});
   $('mini').classList.add('show');
@@ -576,7 +615,7 @@ function show() {
   $('edit').style.display = t.lib ? '' : 'none';
   $('dur').textContent = fmt(t.dur);
   if ('mediaSession' in navigator) {
-    try { navigator.mediaSession.metadata = new MediaMetadata({ title: t.name, artist: t.artist, artwork: t.image ? [{ src: t.image, sizes: '300x300', type: 'image/jpeg' }] : [] }); } catch (e) {}
+    try { navigator.mediaSession.metadata = new MediaMetadata({ title: t.name, artist: t.artist, artwork: t.image ? [{ src: t.image, sizes: '300x300', type: 'image/jpeg' }] : [{ src: SITE_ICON, sizes: '192x192', type: 'image/png' }] }); } catch (e) {}
   }
 }
 function next() {
@@ -600,7 +639,20 @@ function prev() {
   idx = t && queue.includes(t) ? queue.indexOf(t) : (idx - 1 + queue.length) % queue.length;
   load();
 }
-function toggle() { if (audio.src) { audio.paused ? audio.play().catch(() => {}) : audio.pause(); } }
+function retryCurrent() {
+  const t = queue[idx]; if (!t) return;
+  const pos = failed ? failed.pos : 0; failed = null;
+  audio.muted = true;
+  audio.src = t.audio;
+  audio.addEventListener('loadedmetadata', () => { if (pos > 1) audio.currentTime = pos; }, { once: true });
+  audio.play().catch(() => {});
+}
+function toggle() {
+  if (!audio.src) return;
+  if (failed) { retryCurrent(); return; }
+  if (audio.paused) { audio.muted = false; audio.play().catch(() => {}); } else audio.pause();
+}
+window.addEventListener('online', () => { if (failed && failed.t === queue[idx]) retryCurrent(); });
 function setIcon(p) {
   const d = p ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
   $('ppi').innerHTML = d; $('fppi').innerHTML = d;
@@ -613,14 +665,20 @@ $('fpp').onclick = toggle;
 $('next').onclick = next;
 $('prev').onclick = prev;
 $('sh').onclick = () => setShuffle(!shuffle);
-$('rp').onclick = () => { repeat = !repeat; audio.loop = repeat; $('rp').classList.toggle('on', repeat); };
+$('rp').onclick = () => { repeat = !repeat; audio.loop = repeat; $('rp').classList.toggle('on', repeat); saveModes(); };
 $('mini').onclick = e => { if (!e.target.closest('button,input')) $('full').classList.add('open'); };
 $('close').onclick = () => $('full').classList.remove('open');
 audio.onplay = () => setIcon(true);
 audio.onpause = () => setIcon(false);
-audio.onplaying = () => { errs = 0; };
+audio.onplaying = () => { setTimeout(() => { audio.muted = false; }, 90); };
 audio.onended = () => next();
-audio.onerror = () => { if (queue.length > 1 && ++errs <= queue.length) next(); };
+audio.onerror = () => {
+  audio.muted = false;
+  if (!queue[idx]) return;
+  setIcon(false);
+  failed = { t: queue[idx], pos: audio.currentTime || 0 };
+  toast(navigator.onLine ? 'Не удалось загрузить песню. Нажмите ▶, чтобы повторить.' : 'Нет соединения. Песня продолжится, когда связь вернётся.');
+};
 audio.ontimeupdate = () => {
   if (!audio.duration || seeking) return;
   const p = audio.currentTime / audio.duration * 100;
@@ -657,7 +715,7 @@ $('esave').onclick = async () => {
 };
 
 /* Меню, разделы, тема */
-const TITLES = { lib: 'Моя музыка', playlists: 'Плейлисты', search: 'Поиск', popular: 'Популярное', fav: 'Избранное', settings: 'Настройки' };
+const TITLES = { lib: 'Моя музыка', playlists: 'Плейлисты', search: 'Поиск', settings: 'Настройки' };
 const PH = { lib: 'Поиск по библиотеке', search: 'Трек или исполнитель' };
 function go(v, id) {
   tab = v;
@@ -673,7 +731,7 @@ function go(v, id) {
   if (v === 'lib') loadLib();
   else if ((v === 'playlists' || v === 'pl') && libState !== 'ok' && libState !== 'loading') loadLib();
   if (v === 'playlists' && plState !== 'ok' && plState !== 'loading') loadPlaylists();
-  if (v === 'popular' && !popular.length) loadPopular();
+  if (v === 'search' && !popular.length) loadPopular();
   render();
   $('list').scrollTop = 0;
 }
@@ -697,6 +755,44 @@ document.addEventListener('touchend', e => {
   else if (dx < 0 && open) closeDrawer();
 }, { passive: true });
 
+/* Обновление свайпом вниз */
+let pull = null, refreshing = false;
+function setPull(px) {
+  const el = $('ptr');
+  el.style.opacity = px ? Math.min(px / 60, 1) : 0;
+  el.style.transform = 'translate(-50%, ' + (px - 50) + 'px) rotate(' + px * 3 + 'deg)';
+}
+async function refresh() {
+  if (refreshing) return;
+  refreshing = true;
+  const el = $('ptr');
+  el.classList.add('spin'); el.style.opacity = 1; el.style.transform = 'translate(-50%, 56px)';
+  try {
+    if (tab === 'playlists') await loadPlaylists();
+    else if (tab === 'pl') { await loadLib(); await loadPlaylists(); }
+    else if (tab === 'search') { const q = $('q').value.trim(); if (q) await search(q); else await loadPopular(); }
+    else await loadLib();
+  } catch (e) {}
+  el.classList.remove('spin'); setPull(0); refreshing = false;
+  toast('Обновлено');
+}
+document.addEventListener('touchstart', e => {
+  pull = null;
+  if (e.touches.length !== 1 || refreshing || $('list').scrollTop > 0) return;
+  if (e.target.closest('input,#full,#drawer,#scrim,#sov,#dlg,#pld,#login,#mini')) return;
+  pull = { y: e.touches[0].clientY, x: e.touches[0].clientX, d: 0 };
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (!pull) return;
+  const dy = e.touches[0].clientY - pull.y, dx = Math.abs(e.touches[0].clientX - pull.x);
+  if (dy <= 0 || dx > dy * 0.8) { pull.d = 0; setPull(0); return; }
+  pull.d = dy; setPull(Math.min(dy * 0.6, 80));
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  if (pull && pull.d > 110) refresh(); else setPull(0);
+  pull = null;
+}, { passive: true });
+
 const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
 const uname = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : (lsGet('uname') || 'Гость');
 $('dname').textContent = uname;
@@ -716,7 +812,7 @@ function renderSettings() {
     '<div class="sh">Тема</div><div class="seg">' + b('light', 'Светлая') + b('dark', 'Тёмная') + '</div>' +
     '<div class="sh">Как добавить песни</div><p class="hint">Перешлите mp3-файлы боту в личные сообщения. Они появятся в «Моя музыка» примерно через минуту.</p>' +
     (!inTg && lsGet('tok') ? '<div class="sh">Аккаунт</div><p class="hint" style="margin-bottom:10px">Вы вошли как ' + esc(lsGet('uname') || 'пользователь Telegram') + '</p><button class="btn" data-act="logout">Выйти</button>' : '') +
-    '<div class="sh">Об источниках</div><p class="hint">«Поиск» и «Популярное» работают на музыке Jamendo со свободными лицензиями.</p>' +
+    '<div class="sh">Об источниках</div><p class="hint">«Поиск» работает на музыке Jamendo со свободными лицензиями. Понравившиеся песни сохраняются в «Моей музыке».</p>' +
     '</div>';
 }
 
@@ -724,6 +820,7 @@ let timer;
 $('q').addEventListener('input', () => {
   clearTimeout(timer);
   if (tab === 'lib') { render(); return; }
+  $('qhint').classList.toggle('show', tab === 'search' && !$('q').value.trim());
   timer = setTimeout(() => search($('q').value.trim()), 450);
 });
 $('q').addEventListener('keydown', e => {
@@ -794,8 +891,9 @@ if (!D) {
 }
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
 
+restoreModes(lsGet('modes'));
+sGet('modes').then(v => { if (v) restoreModes(v); });
 go('lib');
-loadFavs();
 loadPlaylists();
 </script>
 </body>
