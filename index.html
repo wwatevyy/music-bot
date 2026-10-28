@@ -122,17 +122,21 @@ html,body,main{overscroll-behavior-y:contain}
 #ptr svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 #ptr.spin svg{animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+.row{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.drag{touch-action:none;cursor:grab}
+.row.dragging{background:var(--card);box-shadow:var(--sh);position:relative;z-index:3}
+.rbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px;padding:10px 12px;border-radius:14px;background:var(--soft);color:var(--hint);font-size:14px}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
     <div class="hbar">
-      <button class="cb" id="menu" aria-label="Меню"><svg class="ic" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+      <button class="cb" id="menu" aria-label="Меню" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
       <div id="title">Моя музыка</div>
     </div>
     <input id="q" type="search" placeholder="Поиск по библиотеке" autocomplete="off">
-    <div id="qhint">Показаны популярные песни. Начните вводить запрос, чтобы искать.</div>
+    <div id="qhint" data-i18n>Показаны популярные песни. Начните вводить запрос, чтобы искать.</div>
   </header>
   <main id="list"></main>
 </div>
@@ -140,63 +144,63 @@ html,body,main{overscroll-behavior-y:contain}
 <div id="scrim"></div>
 <nav id="drawer">
   <div class="dh"><div id="av"></div><div class="dn" id="dname"></div><div class="du" id="duser"></div></div>
-  <button class="di on" data-go="lib"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>Моя музыка</button>
-  <button class="di" data-go="playlists"><svg class="ic" viewBox="0 0 24 24"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>Плейлисты</button>
-  <button class="di" data-go="search"><svg class="ic" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Поиск</button>
+  <button class="di on" data-go="lib"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg><span data-i18n>Моя музыка</span></button>
+  <button class="di" data-go="playlists"><svg class="ic" viewBox="0 0 24 24"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg><span data-i18n>Плейлисты</span></button>
+  <button class="di" data-go="search"><svg class="ic" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span data-i18n>Поиск</span></button>
   <div class="sep"></div>
-  <button class="di" data-go="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>Настройки</button>
+  <button class="di" data-go="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg><span data-i18n>Настройки</span></button>
 </nav>
 
 <div id="mini">
   <div class="mrow">
     <img id="mc" alt="">
     <div class="tx"><div class="t" id="mt"></div><div class="s" id="ma"></div></div>
-    <button class="cb" id="mprev" aria-label="Предыдущий"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-    <button class="cb main" id="pp" aria-label="Играть"><svg class="ic" viewBox="0 0 24 24" id="ppi"><path d="M8 5v14l11-7z"/></svg></button>
-    <button class="cb" id="mnext" aria-label="Следующий"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zM16 6h2v12h-2z"/></svg></button>
+    <button class="cb" id="mprev" aria-label="Предыдущий" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+    <button class="cb main" id="pp" aria-label="Играть" data-i18n-aria><svg class="ic" viewBox="0 0 24 24" id="ppi"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="cb" id="mnext" aria-label="Следующий" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zM16 6h2v12h-2z"/></svg></button>
   </div>
-  <input id="mseek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Перемотка">
+  <input id="mseek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Перемотка" data-i18n-aria>
 </div>
 
 <section id="full">
   <div class="top">
-    <button class="cb" id="close" aria-label="Свернуть"><svg class="ic" viewBox="0 0 24 24"><path d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6z"/></svg></button>
-    <span>Сейчас играет</span>
+    <button class="cb" id="close" aria-label="Свернуть" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6z"/></svg></button>
+    <span data-i18n>Сейчас играет</span>
     <span style="width:42px"></span>
   </div>
   <img id="fc" alt="">
   <div class="info">
     <div class="tx"><div id="ft"></div><div id="fa"></div></div>
-    <button class="cb" id="edit" aria-label="Изменить"><svg class="ic" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+    <button class="cb" id="edit" aria-label="Изменить" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
   </div>
-  <input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Перемотка">
+  <input id="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Перемотка" data-i18n-aria>
   <div class="time"><span id="cur">0:00</span><span id="dur">0:00</span></div>
   <div class="ctl">
-    <button class="cb" id="sh" aria-label="Перемешать"><svg class="ic" viewBox="0 0 24 24"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
-    <button class="cb" id="prev" aria-label="Предыдущий"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-    <button class="cb main big" id="fpp" aria-label="Играть"><svg class="ic" viewBox="0 0 24 24" id="fppi"><path d="M8 5v14l11-7z"/></svg></button>
-    <button class="cb" id="next" aria-label="Следующий"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zM16 6h2v12h-2z"/></svg></button>
-    <button class="cb" id="rp" aria-label="Повтор"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></svg></button>
+    <button class="cb" id="sh" aria-label="Перемешать" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
+    <button class="cb" id="prev" aria-label="Предыдущий" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+    <button class="cb main big" id="fpp" aria-label="Играть" data-i18n-aria><svg class="ic" viewBox="0 0 24 24" id="fppi"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="cb" id="next" aria-label="Следующий" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zM16 6h2v12h-2z"/></svg></button>
+    <button class="cb" id="rp" aria-label="Повтор" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></svg></button>
   </div>
 </section>
 
 <div id="login">
   <img src="icon-192.png" alt="">
-  <h2>Музыка</h2>
-  <p>Войдите через Telegram, чтобы открыть вашу библиотеку и плейлисты.</p>
-  <button id="lbtn">Войти через Telegram</button>
-  <a id="llink" target="_blank" rel="noopener">Не открылось? Нажмите сюда</a>
-  <button class="btn" id="lcheck" style="display:none;margin-top:14px">Я подтвердил(а) вход</button>
+  <h2 data-i18n>Музыка</h2>
+  <p data-i18n>Войдите через Telegram, чтобы открыть вашу библиотеку и плейлисты.</p>
+  <button id="lbtn" data-i18n>Войти через Telegram</button>
+  <a id="llink" target="_blank" rel="noopener" data-i18n>Не открылось? Нажмите сюда</a>
+  <button class="btn" id="lcheck" data-i18n style="display:none;margin-top:14px">Я подтвердил(а) вход</button>
   <div id="lstatus"></div>
 </div>
 
 <div id="pld">
   <div class="box">
     <h2 id="pldt">Новый плейлист</h2>
-    <input id="pn" placeholder="Название" maxlength="60">
-    <div class="pcov"><img id="pci" alt=""><button class="btn" id="pcb">Выбрать обложку</button></div>
+    <input id="pn" placeholder="Название" data-i18n-ph maxlength="60">
+    <div class="pcov"><img id="pci" alt=""><button class="btn" id="pcb" data-i18n>Выбрать обложку</button></div>
     <input id="pf" type="file" accept="image/*" hidden>
-    <div class="btns"><button class="btn dg" id="pdel">Удалить</button><button class="btn" id="pcancel">Отмена</button><button class="btn p" id="psave">Сохранить</button></div>
+    <div class="btns"><button class="btn dg" id="pdel" data-i18n>Удалить</button><button class="btn" id="pcancel" data-i18n>Отмена</button><button class="btn p" id="psave" data-i18n>Сохранить</button></div>
   </div>
 </div>
 
@@ -206,10 +210,10 @@ html,body,main{overscroll-behavior-y:contain}
 
 <div id="dlg">
   <div class="box">
-    <h2>Изменить трек</h2>
-    <input id="et" placeholder="Название" maxlength="100">
-    <input id="ea" placeholder="Исполнитель" maxlength="100">
-    <div class="btns"><button class="btn" id="ecancel">Отмена</button><button class="btn p" id="esave">Сохранить</button></div>
+    <h2 data-i18n>Изменить трек</h2>
+    <input id="et" placeholder="Название" data-i18n-ph maxlength="100">
+    <input id="ea" placeholder="Исполнитель" data-i18n-ph maxlength="100">
+    <div class="btns"><button class="btn" id="ecancel" data-i18n>Отмена</button><button class="btn p" id="esave" data-i18n>Сохранить</button></div>
   </div>
 </div>
 
@@ -229,7 +233,107 @@ try { applyTheme(localStorage.getItem('theme') || 'light'); } catch (e) { applyT
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = s => { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-const UNK = 'Неизвестный исполнитель';
+const EN = {
+  'Музыка': 'Music',
+  'Меню': 'Menu',
+  'Моя музыка': 'My music',
+  'Плейлисты': 'Playlists',
+  'Поиск': 'Search',
+  'Настройки': 'Settings',
+  'Поиск по библиотеке': 'Search your library',
+  'Трек или исполнитель': 'Song or artist',
+  'Показаны популярные песни. Начните вводить запрос, чтобы искать.': 'Showing popular songs. Start typing to search.',
+  'Предыдущий': 'Previous',
+  'Играть': 'Play',
+  'Следующий': 'Next',
+  'Перемотка': 'Seek',
+  'Свернуть': 'Collapse',
+  'Сейчас играет': 'Now playing',
+  'Изменить': 'Edit',
+  'Перемешать': 'Shuffle',
+  'Повтор': 'Repeat',
+  'Войдите через Telegram, чтобы открыть вашу библиотеку и плейлисты.': 'Sign in with Telegram to open your library and playlists.',
+  'Войти через Telegram': 'Sign in with Telegram',
+  'Не открылось? Нажмите сюда': 'Didn\'t open? Tap here',
+  'Я подтвердил(а) вход': 'I confirmed the sign-in',
+  'Название': 'Name',
+  'Выбрать обложку': 'Choose cover',
+  'Удалить': 'Delete',
+  'Отмена': 'Cancel',
+  'Сохранить': 'Save',
+  'Изменить трек': 'Edit track',
+  'Исполнитель': 'Artist',
+  'Новый плейлист': 'New playlist',
+  'Изменить плейлист': 'Edit playlist',
+  'Неизвестный исполнитель': 'Unknown artist',
+  'Войдите, чтобы сохранять песни': 'Sign in to save songs',
+  'Убрать «{n}» из «Моей музыки»?': 'Remove “{n}” from My music?',
+  'Добавлено в «Мою музыку»': 'Added to My music',
+  'Не удалось сохранить': 'Could not save',
+  'Избранное перенесено в «Мою музыку»': 'Favorites moved to My music',
+  'Ищу…': 'Searching…',
+  'Не получилось загрузить. Проверьте интернет и попробуйте ещё раз.': 'Could not load. Check your connection and try again.',
+  'Ничего не нашлось. Попробуйте другое название.': 'Nothing found. Try another name.',
+  'Удалить «{n}» из библиотеки?': 'Delete “{n}” from your library?',
+  'Ничего не нашлось.': 'Nothing found.',
+  'Загружаю…': 'Loading…',
+  'Не удалось загрузить. Попробуйте ещё раз.': 'Could not load. Please try again.',
+  'В плейлисте пока нет песен. Добавьте их через ⋯ у песни в «Моей музыке».': 'This playlist has no songs yet. Add them via ⋯ on a song in My music.',
+  'Откройте приложение через бота в Telegram.': 'Open the app through the bot in Telegram.',
+  'Не удалось загрузить библиотеку. Проверьте интернет и откройте вкладку ещё раз.': 'Could not load your library. Check your connection and reopen this tab.',
+  'Библиотека пуста. Перешлите mp3-файлы боту или сохраните песни из поиска, и они появятся здесь.': 'Your library is empty. Send mp3 files to the bot or save songs from Search, and they will appear here.',
+  'Не удалось загрузить плейлисты.': 'Could not load playlists.',
+  'Плейлистов пока нет. Создайте первый и добавляйте в него песни через ⋯ в «Моей музыке».': 'No playlists yet. Create one and add songs via ⋯ in My music.',
+  'Назад': 'Back',
+  'Действия': 'Actions',
+  'В Мою музыку': 'Add to My music',
+  'Музыка: Jamendo': 'Music: Jamendo',
+  'Воспроизвести далее': 'Play next',
+  'Добавить в плейлист': 'Add to playlist',
+  'Убрать из плейлиста': 'Remove from playlist',
+  'Будет играть следующей': 'Will play next',
+  'Новый плейлист…': 'New playlist…',
+  'Уже в плейлисте «{n}»': 'Already in “{n}”',
+  'Добавлено в «{n}»': 'Added to “{n}”',
+  'Не удалось сохранить плейлист': 'Could not save the playlist',
+  'Не удалось прочитать картинку': 'Could not read the image',
+  'Обложка не загрузилась': 'The cover did not upload',
+  'Удалить плейлист «{n}»?': 'Delete the playlist “{n}”?',
+  'Все песни сыграны. Выберите песню или нажмите «Перемешать»': 'All songs have played. Pick a song or tap “Shuffle”.',
+  'Не удалось загрузить песню. Нажмите ▶, чтобы повторить.': 'Could not load the song. Tap ▶ to retry.',
+  'Нет соединения. Песня продолжится, когда связь вернётся.': 'No connection. The song will resume when you are back online.',
+  'Обновлено': 'Updated',
+  'Гость': 'Guest',
+  'Тема': 'Theme',
+  'Светлая': 'Light',
+  'Тёмная': 'Dark',
+  'Как добавить песни': 'How to add songs',
+  'Перешлите mp3-файлы боту в личные сообщения. Они появятся в «Моя музыка» примерно через минуту.': 'Send mp3 files to the bot in a private chat. They will appear in My music within a minute.',
+  'Аккаунт': 'Account',
+  'Вы вошли как {n}': 'Signed in as {n}',
+  'пользователь Telegram': 'Telegram user',
+  'Выйти': 'Sign out',
+  'Об источниках': 'About sources',
+  '«Поиск» работает на музыке Jamendo со свободными лицензиями. Понравившиеся песни сохраняются в «Моей музыке».': '“Search” uses music from Jamendo under free licenses. Songs you like are saved to My music.',
+  'Язык': 'Language',
+  'Перетащите ≡, чтобы изменить порядок': 'Drag ≡ to change the order',
+  'Готово': 'Done',
+  'Выйти из аккаунта на этом устройстве?': 'Sign out of this account on this device?',
+  'Жду подтверждения в Telegram. После нажатия кнопки это может занять до минуты.': 'Waiting for confirmation in Telegram. After you tap the button it may take up to a minute.',
+  'Время вышло. Нажмите «Войти через Telegram» ещё раз.': 'Time is up. Tap “Sign in with Telegram” again.',
+  'Создаю ссылку для входа…': 'Creating a sign-in link…',
+  'Нет связи с сервером. Проверьте интернет.': 'Cannot reach the server. Check your connection.',
+  'Сервер не смог создать ссылку. Попробуйте позже.': 'The server could not create a link. Try again later.',
+  'Проверяю…': 'Checking…',
+  'Подтверждение ещё не дошло. Подождите немного и нажмите снова.': 'Confirmation has not arrived yet. Wait a bit and tap again.',
+};
+let lang = 'ru';
+const __ = (k, v) => {
+  let r = lang === 'en' && EN[k] !== undefined ? EN[k] : k;
+  if (v) for (const x in v) r = r.split('{' + x + '}').join(v[x]);
+  return r;
+};
+const unk = () => __('Неизвестный исполнитель');
 const NOCOVER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" fill="#8b80b0" fill-opacity=".25"/><path d="M20 15v14.2a4 4 0 1 0 2 3.5V19h8v-4z" fill="#a78bfa"/></svg>');
 const heartSvg = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3 5 6.5 5c2 0 3.6 1.1 5.5 3 1.9-1.9 3.5-3 5.5-3 3.5 0 5.3 3.6 4 6.8C19.5 16.4 12 21 12 21z"/></svg>';
 const trashSvg = '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
@@ -279,19 +383,19 @@ const SITE_ICON = 'https://wwatevyy.github.io/music-bot/icon-192.png';
 const inLib = t => lib.some(x => x.ext && x.rid === 'jm' + t.id);
 async function toggleExt(t) {
   if (!t) return;
-  if (!D) { toast('Войдите, чтобы сохранять песни'); return; }
+  if (!D) { toast(__('Войдите, чтобы сохранять песни')); return; }
   const rid = 'jm' + t.id;
   if (inLib(t)) {
-    if (!(await ask('Убрать «' + t.name + '» из «Моей музыки»?'))) return;
+    if (!(await ask(__('Убрать «{n}» из «Моей музыки»?', { n: t.name })))) return;
     lib = lib.filter(x => x.rid !== rid); render();
     try { await fetch(API + '/api/delete?id=' + encodeURIComponent(rid) + '&d=' + D, { method: 'POST' }); } catch (e) {}
     return;
   }
-  lib.unshift({ id: 'L' + rid, rid, name: t.name, artist: t.artist || UNK, image: t.image || '', audio: t.audio, dur: t.dur, lib: true, ext: true });
+  lib.unshift({ id: 'L' + rid, rid, name: t.name, artist: t.artist || unk(), image: t.image || '', audio: t.audio, dur: t.dur, lib: true, ext: true });
   render();
-  toast('Добавлено в «Мою музыку»');
+  toast(__('Добавлено в «Мою музыку»'));
   const body = JSON.stringify({ id: t.id, name: t.name, artist: t.artist, image: t.image, audio: t.audio, dur: t.dur });
-  try { await apiPost('/api/ext/add', body, ''); } catch (e) { toast('Не удалось сохранить'); }
+  try { await apiPost('/api/ext/add', body, ''); } catch (e) { toast(__('Не удалось сохранить')); }
   if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {} }
 }
 async function migrateFavs() {
@@ -305,7 +409,7 @@ async function migrateFavs() {
     const body = JSON.stringify({ id: t.id, name: t.name, artist: t.artist, image: t.image, audio: t.audio, dur: t.dur });
     try { await apiPost('/api/ext/add', body, ''); } catch (e) {}
   }
-  if (ids.length) { toast('Избранное перенесено в «Мою музыку»'); loadLib(); }
+  if (ids.length) { toast(__('Избранное перенесено в «Мою музыку»')); loadLib(); }
 }
 
 /* Jamendo */
@@ -317,7 +421,7 @@ async function jam(extra) {
 async function search(q) {
   const my = ++reqId;
   if (!q) { results = []; render(); return; }
-  if (tab === 'search') $('list').innerHTML = '<div class="msg">Ищу…</div>';
+  if (tab === 'search') $('list').innerHTML = '<div class="msg">' + __('Ищу…') + '</div>';
   try {
     const r = await jam('&search=' + encodeURIComponent(q));
     if (my !== reqId) return;
@@ -325,10 +429,10 @@ async function search(q) {
   } catch (e) {
     if (my !== reqId) return;
     results = [];
-    if (tab === 'search') $('list').innerHTML = '<div class="msg">Не получилось загрузить. Проверьте интернет и попробуйте ещё раз.</div>';
+    if (tab === 'search') $('list').innerHTML = '<div class="msg">' + __('Не получилось загрузить. Проверьте интернет и попробуйте ещё раз.') + '</div>';
     return;
   }
-  render('Ничего не нашлось. Попробуйте другое название.');
+  render(__('Ничего не нашлось. Попробуйте другое название.'));
 }
 async function loadPopular() {
   popState = 'loading'; render();
@@ -345,9 +449,9 @@ async function loadLib() {
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     lib = j.tracks.map(t => t.ext
-      ? { id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || UNK, lib: true, ext: true, dur: t.dur, image: t.image || '', audio: t.audio }
+      ? { id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || unk(), lib: true, ext: true, dur: t.dur, image: t.image || '', audio: t.audio }
       : {
-        id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || UNK, lib: true, dur: t.dur,
+        id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || unk(), lib: true, dur: t.dur,
         image: t.cover ? API + '/api/cover/' + encodeURIComponent(t.id) + '?d=' + D : '',
         audio: API + '/api/audio/' + encodeURIComponent(t.id) + '?d=' + D
       });
@@ -357,7 +461,7 @@ async function loadLib() {
   if (libState === 'ok') migrateFavs();
 }
 async function delTrack(t) {
-  const q = 'Удалить «' + t.name + '» из библиотеки?';
+  const q = __('Удалить «{n}» из библиотеки?', { n: t.name });
   const ok = await new Promise(r => { try { tg.showConfirm(q, r); } catch (e) { r(confirm(q)); } });
   if (!ok) return;
   try { await fetch(API + '/api/delete?id=' + encodeURIComponent(t.rid) + '&d=' + D, { method: 'POST' }); } catch (e) {}
@@ -366,10 +470,12 @@ async function delTrack(t) {
 }
 
 /* Список */
-const pn = n => n + ' ' + (n % 10 === 1 && n % 100 !== 11 ? 'песня' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'песни' : 'песен');
+const pn = n => lang === 'en' ? n + (n === 1 ? ' song' : ' songs') : n + ' ' + (n % 10 === 1 && n % 100 !== 11 ? 'песня' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'песни' : 'песен');
 const plTracks = p => p.tracks.map(id => lib.find(t => t.rid === id)).filter(Boolean);
 const curPlObj = () => playlists.find(p => p.id === curPl);
 const plCover = p => p.cover ? API + '/api/pl/cover/' + encodeURIComponent(p.id) + '?d=' + D + '&v=' + p.cover : NOCOVER;
+const gripSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg>';
+let reorder = false, noClickUntil = 0, drag = null, lp = null;
 const dotsSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>';
 const backSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
 const penSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
@@ -388,21 +494,21 @@ function current() {
 }
 function emptyText(emptyMsg) {
   if (tab === 'search') {
-    if ($('q').value.trim()) return emptyMsg || 'Ничего не нашлось.';
-    return popState === 'loading' ? 'Загружаю…' : 'Не удалось загрузить. Попробуйте ещё раз.';
+    if ($('q').value.trim()) return emptyMsg || __('Ничего не нашлось.');
+    return popState === 'loading' ? __('Загружаю…') : __('Не удалось загрузить. Попробуйте ещё раз.');
   }
-  if (tab === 'pl') return libState === 'loading' ? 'Загружаю…' : 'В плейлисте пока нет песен. Добавьте их через ⋯ у песни в «Моей музыке».';
-  return libState === 'loading' ? 'Загружаю…'
-    : libState === 'noauth' ? 'Откройте приложение через бота в Telegram.'
-    : libState === 'error' ? 'Не удалось загрузить библиотеку. Проверьте интернет и откройте вкладку ещё раз.'
-    : lib.length ? 'Ничего не нашлось.'
-    : 'Библиотека пуста. Перешлите mp3-файлы боту или сохраните песни из поиска, и они появятся здесь.';
+  if (tab === 'pl') return libState === 'loading' ? __('Загружаю…') : __('В плейлисте пока нет песен. Добавьте их через ⋯ у песни в «Моей музыке».');
+  return libState === 'loading' ? __('Загружаю…')
+    : libState === 'noauth' ? __('Откройте приложение через бота в Telegram.')
+    : libState === 'error' ? __('Не удалось загрузить библиотеку. Проверьте интернет и откройте вкладку ещё раз.')
+    : lib.length ? __('Ничего не нашлось.')
+    : __('Библиотека пуста. Перешлите mp3-файлы боту или сохраните песни из поиска, и они появятся здесь.');
 }
 function renderPlaylists() {
-  let h = '<div class="row add" data-act="newpl"><div class="cv">' + plusSvg + '</div><div class="tx"><div class="t">Новый плейлист</div></div></div>';
-  if (plState === 'loading' && !playlists.length) h += '<div class="msg">Загружаю…</div>';
-  else if (plState === 'error') h += '<div class="msg">Не удалось загрузить плейлисты.</div>';
-  else if (!playlists.length) h += '<div class="msg">Плейлистов пока нет. Создайте первый и добавляйте в него песни через ⋯ в «Моей музыке».</div>';
+  let h = '<div class="row add" data-act="newpl"><div class="cv">' + plusSvg + '</div><div class="tx"><div class="t">' + __('Новый плейлист') + '</div></div></div>';
+  if (plState === 'loading' && !playlists.length) h += '<div class="msg">' + __('Загружаю…') + '</div>';
+  else if (plState === 'error') h += '<div class="msg">' + __('Не удалось загрузить плейлисты.') + '</div>';
+  else if (!playlists.length) h += '<div class="msg">' + __('Плейлистов пока нет. Создайте первый и добавляйте в него песни через ⋯ в «Моей музыке».') + '</div>';
   h += playlists.map(p => '<div class="row" data-pl="' + esc(p.id) + '"><img class="cv" alt="" src="' + esc(plCover(p)) + '"><div class="tx"><div class="t">' + esc(p.name) + '</div><div class="s">' + pn(libState === 'ok' ? plTracks(p).length : p.tracks.length) + '</div></div></div>').join('');
   $('list').innerHTML = h;
 }
@@ -414,21 +520,25 @@ function render(emptyMsg) {
   if (tab === 'pl' && !p) { go('playlists'); return; }
   const data = current(), el = $('list');
   const curId = queue[idx] ? queue[idx].id : null;
-  const head = p ? '<div class="plhead"><button class="ib" data-act="back" aria-label="Назад">' + backSvg + '</button><img class="cv" alt="" src="' + esc(plCover(p)) + '"><div class="tx"><div class="nm">' + esc(p.name) + '</div><div class="s">' + pn(data.length) + '</div></div><button class="ib" data-act="editpl" aria-label="Изменить">' + penSvg + '</button></div>' : '';
-  const btns = data.length && (tab === 'lib' || tab === 'pl') ? '<div class="pbtns"><button class="p" data-act="playall">' + playIc + 'Играть</button><button data-act="shuf">' + shufIc + 'Перемешать</button></div>' : '';
+  const head = p ? '<div class="plhead"><button class="ib" data-act="back" aria-label="' + __('Назад') + '">' + backSvg + '</button><img class="cv" alt="" src="' + esc(plCover(p)) + '"><div class="tx"><div class="nm">' + esc(p.name) + '</div><div class="s">' + pn(data.length) + '</div></div><button class="ib" data-act="editpl" aria-label="' + __('Изменить') + '">' + penSvg + '</button></div>' : '';
+  const btns = reorder ? '<div class="rbar"><span>' + __('Перетащите ≡, чтобы изменить порядок') + '</span><button class="btn p" data-act="done">' + __('Готово') + '</button></div>' : data.length && (tab === 'lib' || tab === 'pl') ? '<div class="pbtns"><button class="p" data-act="playall">' + playIc + __('Играть') + '</button><button data-act="shuf">' + shufIc + __('Перемешать') + '</button></div>' : '';
   if (!data.length) { el.innerHTML = head + '<div class="msg">' + esc(emptyText(emptyMsg)) + '</div>'; return; }
   el.innerHTML = head + btns + data.map((t, i) =>
     '<div class="row' + (t.id === curId ? ' cur' : '') + '" data-i="' + i + '">' +
       '<img class="cv" loading="lazy" alt="" src="' + esc(t.image || NOCOVER) + '">' +
       '<div class="tx"><div class="t">' + esc(t.name) + '</div><div class="s">' + esc(t.artist) + (t.dur ? ' · ' + fmt(t.dur) : '') + '</div></div>' +
-      (t.lib
-        ? '<button class="ib" data-more="' + i + '" aria-label="Действия">' + dotsSvg + '</button>'
-        : '<button class="ib' + (inLib(t) ? ' on' : '') + '" data-fav="' + i + '" aria-label="В Мою музыку">' + heartSvg + '</button>') +
-    '</div>').join('') + (tab === 'search' ? '<div class="credit">Музыка: Jamendo</div>' : '');
+      (reorder ? '<button class="ib drag">' + gripSvg + '</button>' : t.lib
+        ? '<button class="ib" data-more="' + i + '" aria-label="' + __('Действия') + '">' + dotsSvg + '</button>'
+        : '<button class="ib' + (inLib(t) ? ' on' : '') + '" data-fav="' + i + '" aria-label="' + __('В Мою музыку') + '">' + heartSvg + '</button>') +
+    '</div>').join('') + (tab === 'search' ? '<div class="credit">' + __('Музыка: Jamendo') + '</div>' : '');
 }
 $('list').addEventListener('click', e => {
+  if (Date.now() < noClickUntil) return;
+  if (reorder && !e.target.closest('[data-act]')) return;
   const th = e.target.closest('[data-tm]');
   if (th) { setTheme(th.dataset.tm); return; }
+  const lg = e.target.closest('[data-lang]');
+  if (lg) { setLang(lg.dataset.lang); return; }
   const act = e.target.closest('[data-act]');
   if (act) { doAct(act.dataset.act); return; }
   const pl = e.target.closest('[data-pl]');
@@ -441,6 +551,65 @@ $('list').addEventListener('click', e => {
   const r = e.target.closest('.row');
   if (r && r.dataset.i != null) play(data, +r.dataset.i);
 });
+
+/* Порядок песен: долгое нажатие и перетаскивание */
+const canReorder = () => (tab === 'lib' && !$('q').value.trim() && libState === 'ok' && lib.length > 1) || (tab === 'pl' && !!curPlObj() && current().length > 1);
+function enterReorder() {
+  if (!canReorder() || reorder) return;
+  reorder = true; noClickUntil = Date.now() + 700;
+  if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {} }
+  render();
+}
+function exitReorder() { reorder = false; render(); }
+$('list').addEventListener('contextmenu', e => { if (e.target.closest('.row')) e.preventDefault(); });
+$('list').addEventListener('pointerdown', e => {
+  const h = e.target.closest('.drag');
+  if (h) {
+    const row = h.closest('.row');
+    drag = { row, grab: e.clientY - row.getBoundingClientRect().top };
+    row.classList.add('dragging');
+    e.preventDefault();
+    return;
+  }
+  if (reorder || e.target.closest('button') || !canReorder()) return;
+  if (!e.target.closest('.row[data-i]')) return;
+  lp = { x: e.clientX, y: e.clientY, t: setTimeout(() => { lp = null; enterReorder(); }, 550) };
+});
+window.addEventListener('pointermove', e => {
+  if (lp && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 10) { clearTimeout(lp.t); lp = null; }
+  if (!drag) return;
+  const row = drag.row, L = $('list'), lr = L.getBoundingClientRect();
+  if (e.clientY < lr.top + 60) L.scrollTop -= 14; else if (e.clientY > lr.bottom - 110) L.scrollTop += 14;
+  row.style.transform = '';
+  const want = e.clientY - drag.grab;
+  const isRow = el => el && el.classList && el.classList.contains('row') && el.dataset.i !== undefined;
+  let prev = row.previousElementSibling, next = row.nextElementSibling;
+  while (isRow(prev) && want < prev.getBoundingClientRect().top + prev.offsetHeight / 2) { row.parentNode.insertBefore(row, prev); prev = row.previousElementSibling; }
+  while (isRow(next) && want + row.offsetHeight > next.getBoundingClientRect().top + next.offsetHeight / 2) { row.parentNode.insertBefore(next, row); next = row.nextElementSibling; }
+  row.style.transform = 'translateY(' + (want - row.getBoundingClientRect().top) + 'px)';
+});
+function dragEnd() {
+  if (lp) { clearTimeout(lp.t); lp = null; }
+  if (!drag) return;
+  const row = drag.row; drag = null;
+  row.style.transform = ''; row.classList.remove('dragging');
+  commitOrder([...$('list').querySelectorAll('.row[data-i]')].map(r => +r.dataset.i));
+}
+['pointerup', 'pointercancel'].forEach(ev => window.addEventListener(ev, dragEnd));
+function commitOrder(order) {
+  const data = current();
+  if (order.every((v, i) => v === i)) { render(); return; }
+  const neu = order.map(i => data[i]).filter(Boolean);
+  if (tab === 'lib') {
+    lib = neu; render();
+    apiPost('/api/order', JSON.stringify({ ids: lib.map(t => t.rid) }), '').catch(() => toast(__('Не удалось сохранить')));
+  } else if (tab === 'pl') {
+    const p = curPlObj(); if (!p) return;
+    const seen = new Set(neu.map(t => t.rid));
+    p.tracks = neu.map(t => t.rid).concat(p.tracks.filter(id => !seen.has(id)));
+    savePl(p);
+  }
+}
 
 /* Действия, меню, плейлисты */
 const ask = q => new Promise(r => { try { tg.showConfirm(q, r); } catch (e) { r(confirm(q)); } });
@@ -470,6 +639,7 @@ function doAct(a) {
   else if (a === 'newpl') openPlDlg(null);
   else if (a === 'editpl') openPlDlg(curPl);
   else if (a === 'logout') logout();
+  else if (a === 'done') exitReorder();
 }
 function openSheet(title, items) {
   sheetItems = items;
@@ -484,23 +654,23 @@ $('spanel').onclick = e => {
 $('sov').onclick = e => { if (e.target === $('sov')) closeSheet(); };
 function showMenu(t) {
   if (!t) return;
-  const items = [{ l: 'Воспроизвести далее', f: () => playNext(t) }, { l: 'Добавить в плейлист', f: () => pickPlaylist(t) }];
-  if (tab === 'pl') items.push({ l: 'Убрать из плейлиста', f: () => removeFromPl(t), dg: 1 });
-  else items.push({ l: 'Удалить', f: () => delTrack(t), dg: 1 });
+  const items = [{ l: __('Воспроизвести далее'), f: () => playNext(t) }, { l: __('Добавить в плейлист'), f: () => pickPlaylist(t) }];
+  if (tab === 'pl') items.push({ l: __('Убрать из плейлиста'), f: () => removeFromPl(t), dg: 1 });
+  else items.push({ l: __('Удалить'), f: () => delTrack(t), dg: 1 });
   openSheet(t.name, items);
 }
 function playNext(t) {
   if (!queue.length) { play([t], 0); return; }
-  upNext.push({ ...t }); toast('Будет играть следующей');
+  upNext.push({ ...t }); toast(__('Будет играть следующей'));
 }
 function pickPlaylist(t) {
-  const items = [{ l: 'Новый плейлист…', f: () => { pendingAdd = t; openPlDlg(null); } }];
+  const items = [{ l: __('Новый плейлист…'), f: () => { pendingAdd = t; openPlDlg(null); } }];
   playlists.forEach(p => items.push({ l: p.name, img: plCover(p), f: () => addToPl(p, t) }));
-  openSheet('Добавить в плейлист', items);
+  openSheet(__('Добавить в плейлист'), items);
 }
 function addToPl(p, t) {
-  if (p.tracks.includes(t.rid)) { toast('Уже в плейлисте «' + p.name + '»'); return; }
-  p.tracks.push(t.rid); savePl(p); toast('Добавлено в «' + p.name + '»');
+  if (p.tracks.includes(t.rid)) { toast(__('Уже в плейлисте «{n}»', { n: p.name })); return; }
+  p.tracks.push(t.rid); savePl(p); toast(__('Добавлено в «{n}»', { n: p.name }));
 }
 function removeFromPl(t) {
   const p = curPlObj(); if (!p) return;
@@ -513,7 +683,7 @@ async function apiPost(path, body, q) {
 async function savePl(p) {
   render();
   try { await apiPost('/api/pl/save', JSON.stringify({ name: p.name, tracks: p.tracks }), 'id=' + encodeURIComponent(p.id) + '&'); }
-  catch (e) { toast('Не удалось сохранить плейлист'); }
+  catch (e) { toast(__('Не удалось сохранить плейлист')); }
 }
 async function loadPlaylists() {
   if (!D) { plState = 'ok'; return; }
@@ -525,7 +695,7 @@ async function loadPlaylists() {
 function openPlDlg(id) {
   plEditId = id; pendingCover = null;
   const p = id ? playlists.find(x => x.id === id) : null;
-  $('pldt').textContent = p ? 'Изменить плейлист' : 'Новый плейлист';
+  $('pldt').textContent = p ? __('Изменить плейлист') : __('Новый плейлист');
   $('pn').value = p ? p.name : '';
   $('pci').src = p ? plCover(p) : NOCOVER;
   $('pdel').style.display = p ? '' : 'none';
@@ -550,28 +720,28 @@ $('pf').onchange = async () => {
   const f = $('pf').files[0]; if (!f) return;
   const b = await cropSquare(f, 400);
   $('pf').value = '';
-  if (!b) { toast('Не удалось прочитать картинку'); return; }
+  if (!b) { toast(__('Не удалось прочитать картинку')); return; }
   pendingCover = b; $('pci').src = URL.createObjectURL(b);
 };
 $('pcancel').onclick = () => { pendingAdd = null; pendingCover = null; $('pld').classList.remove('show'); };
 $('psave').onclick = async () => {
-  const name = $('pn').value.trim() || 'Новый плейлист';
+  const name = $('pn').value.trim() || __('Новый плейлист');
   let p = plEditId ? playlists.find(x => x.id === plEditId) : null;
   if (!p) { p = { id: Math.random().toString(36).slice(2, 10), name, tracks: [], cover: 0 }; playlists.push(p); }
   p.name = name;
-  if (pendingAdd) { if (!p.tracks.includes(pendingAdd.rid)) p.tracks.push(pendingAdd.rid); toast('Добавлено в «' + name + '»'); pendingAdd = null; }
+  if (pendingAdd) { if (!p.tracks.includes(pendingAdd.rid)) p.tracks.push(pendingAdd.rid); toast(__('Добавлено в «{n}»', { n: name })); pendingAdd = null; }
   const cover = pendingCover; pendingCover = null;
   $('pld').classList.remove('show');
   if (tab === 'pl') $('title').textContent = p.name;
   await savePl(p);
   if (cover) {
     try { const j = await apiPost('/api/pl/cover', cover, 'id=' + encodeURIComponent(p.id) + '&'); if (j.v) { p.cover = j.v; render(); } }
-    catch (e) { toast('Обложка не загрузилась'); }
+    catch (e) { toast(__('Обложка не загрузилась')); }
   }
 };
 $('pdel').onclick = async () => {
   const p = playlists.find(x => x.id === plEditId); if (!p) return;
-  if (!(await ask('Удалить плейлист «' + p.name + '»?'))) return;
+  if (!(await ask(__('Удалить плейлист «{n}»?', { n: p.name })))) return;
   playlists = playlists.filter(x => x !== p);
   $('pld').classList.remove('show');
   if (tab === 'pl') go('playlists'); else render();
@@ -599,7 +769,6 @@ function load() {
   const t = queue[idx]; if (!t) return;
   played.add(t); failed = null;
   audio.pause();
-  audio.muted = true;
   audio.src = t.audio; audio.loop = repeat;
   audio.play().catch(() => {});
   $('mini').classList.add('show');
@@ -625,7 +794,7 @@ function next() {
   else if (shuffle && queue.length > 1) {
     if (!order.length) buildOrder();
     t = order.pop();
-    if (!t) { audio.pause(); toast('Все песни сыграны. Выберите песню или нажмите «Перемешать»'); return; }
+    if (!t) { audio.pause(); toast(__('Все песни сыграны. Выберите песню или нажмите «Перемешать»')); return; }
   } else t = queue[(idx + 1) % queue.length];
   hist.push(queue[idx]); if (hist.length > 50) hist.shift();
   if (!queue.includes(t)) queue.splice(idx + 1, 0, t);
@@ -642,7 +811,6 @@ function prev() {
 function retryCurrent() {
   const t = queue[idx]; if (!t) return;
   const pos = failed ? failed.pos : 0; failed = null;
-  audio.muted = true;
   audio.src = t.audio;
   audio.addEventListener('loadedmetadata', () => { if (pos > 1) audio.currentTime = pos; }, { once: true });
   audio.play().catch(() => {});
@@ -650,7 +818,7 @@ function retryCurrent() {
 function toggle() {
   if (!audio.src) return;
   if (failed) { retryCurrent(); return; }
-  if (audio.paused) { audio.muted = false; audio.play().catch(() => {}); } else audio.pause();
+  if (audio.paused) audio.play().catch(() => {}); else audio.pause();
 }
 window.addEventListener('online', () => { if (failed && failed.t === queue[idx]) retryCurrent(); });
 function setIcon(p) {
@@ -670,14 +838,14 @@ $('mini').onclick = e => { if (!e.target.closest('button,input')) $('full').clas
 $('close').onclick = () => $('full').classList.remove('open');
 audio.onplay = () => setIcon(true);
 audio.onpause = () => setIcon(false);
-audio.onplaying = () => { setTimeout(() => { audio.muted = false; }, 90); };
+audio.onplaying = () => { audio.muted = false; };
 audio.onended = () => next();
 audio.onerror = () => {
   audio.muted = false;
   if (!queue[idx]) return;
   setIcon(false);
   failed = { t: queue[idx], pos: audio.currentTime || 0 };
-  toast(navigator.onLine ? 'Не удалось загрузить песню. Нажмите ▶, чтобы повторить.' : 'Нет соединения. Песня продолжится, когда связь вернётся.');
+  toast(__(navigator.onLine ? 'Не удалось загрузить песню. Нажмите ▶, чтобы повторить.' : 'Нет соединения. Песня продолжится, когда связь вернётся.'));
 };
 audio.ontimeupdate = () => {
   if (!audio.duration || seeking) return;
@@ -701,14 +869,14 @@ if ('mediaSession' in navigator) {
 /* Правка названия и исполнителя */
 $('edit').onclick = () => {
   const t = queue[idx]; if (!t) return;
-  $('et').value = t.name; $('ea').value = t.artist === UNK ? '' : t.artist;
+  $('et').value = t.name; $('ea').value = t.artist === unk() ? '' : t.artist;
   $('dlg').classList.add('show');
 };
 $('ecancel').onclick = () => $('dlg').classList.remove('show');
 $('esave').onclick = async () => {
   const t = queue[idx]; if (!t) return;
   const n = $('et').value.trim() || t.name, a = $('ea').value.trim();
-  t.name = n; t.artist = a || UNK;
+  t.name = n; t.artist = a || unk();
   $('dlg').classList.remove('show');
   show(); render();
   try { await fetch(API + '/api/edit?id=' + encodeURIComponent(t.rid) + '&t=' + encodeURIComponent(n) + '&a=' + encodeURIComponent(a) + '&d=' + D, { method: 'POST' }); } catch (e) {}
@@ -717,15 +885,20 @@ $('esave').onclick = async () => {
 /* Меню, разделы, тема */
 const TITLES = { lib: 'Моя музыка', playlists: 'Плейлисты', search: 'Поиск', settings: 'Настройки' };
 const PH = { lib: 'Поиск по библиотеке', search: 'Трек или исполнитель' };
+function updateChrome() {
+  const p = tab === 'pl' ? curPlObj() : null;
+  $('title').textContent = p ? p.name : __(TITLES[tab]);
+  if (PH[tab]) $('q').placeholder = __(PH[tab]);
+}
 function go(v, id) {
   tab = v;
+  reorder = false;
   if (v === 'pl') curPl = id;
   const p = v === 'pl' ? curPlObj() : null;
-  $('title').textContent = p ? p.name : TITLES[v];
+  updateChrome();
   const act = v === 'pl' ? 'playlists' : v;
   document.querySelectorAll('.di').forEach(b => b.classList.toggle('on', b.dataset.go === act));
   $('q').style.display = PH[v] ? '' : 'none';
-  if (PH[v]) $('q').placeholder = PH[v];
   $('q').value = '';
   closeDrawer();
   if (v === 'lib') loadLib();
@@ -744,7 +917,7 @@ document.querySelectorAll('.di').forEach(b => { b.onclick = () => go(b.dataset.g
 let sx = 0, sy = 0, sOk = false;
 document.addEventListener('touchstart', e => {
   const t = e.touches[0]; sx = t.clientX; sy = t.clientY;
-  sOk = !e.target.closest('input,#dlg,#pld,#sov');
+  sOk = !e.target.closest('input,#dlg,#pld,#sov,.drag,.rbar');
 }, { passive: true });
 document.addEventListener('touchend', e => {
   if (!sOk) return;
@@ -774,12 +947,12 @@ async function refresh() {
     else await loadLib();
   } catch (e) {}
   el.classList.remove('spin'); setPull(0); refreshing = false;
-  toast('Обновлено');
+  toast(__('Обновлено'));
 }
 document.addEventListener('touchstart', e => {
   pull = null;
   if (e.touches.length !== 1 || refreshing || $('list').scrollTop > 0) return;
-  if (e.target.closest('input,#full,#drawer,#scrim,#sov,#dlg,#pld,#login,#mini')) return;
+  if (e.target.closest('input,#full,#drawer,#scrim,#sov,#dlg,#pld,#login,#mini,.drag,.rbar')) return;
   pull = { y: e.touches[0].clientY, x: e.touches[0].clientX, d: 0 };
 }, { passive: true });
 document.addEventListener('touchmove', e => {
@@ -794,11 +967,13 @@ document.addEventListener('touchend', () => {
 }, { passive: true });
 
 const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-const uname = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : (lsGet('uname') || 'Гость');
-$('dname').textContent = uname;
-$('duser').textContent = u && u.username ? '@' + u.username : '';
-if (u && u.photo_url) $('av').innerHTML = '<img alt="" src="' + esc(u.photo_url) + '">';
-else $('av').textContent = uname.charAt(0).toUpperCase();
+function setProfile() {
+  const uname = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : (lsGet('uname') || __('Гость'));
+  $('dname').textContent = uname;
+  $('duser').textContent = u && u.username ? '@' + u.username : '';
+  if (u && u.photo_url) $('av').innerHTML = '<img alt="" src="' + esc(u.photo_url) + '">';
+  else $('av').textContent = uname.charAt(0).toUpperCase();
+}
 
 function setTheme(v) {
   applyTheme(v);
@@ -808,12 +983,28 @@ function setTheme(v) {
 }
 function renderSettings() {
   const b = (v, l) => '<button data-tm="' + v + '" class="' + (theme === v ? 'on' : '') + '">' + l + '</button>';
+  const g = (v, l) => '<button data-lang="' + v + '" class="' + (lang === v ? 'on' : '') + '">' + l + '</button>';
   $('list').innerHTML = '<div class="set">' +
-    '<div class="sh">Тема</div><div class="seg">' + b('light', 'Светлая') + b('dark', 'Тёмная') + '</div>' +
-    '<div class="sh">Как добавить песни</div><p class="hint">Перешлите mp3-файлы боту в личные сообщения. Они появятся в «Моя музыка» примерно через минуту.</p>' +
-    (!inTg && lsGet('tok') ? '<div class="sh">Аккаунт</div><p class="hint" style="margin-bottom:10px">Вы вошли как ' + esc(lsGet('uname') || 'пользователь Telegram') + '</p><button class="btn" data-act="logout">Выйти</button>' : '') +
-    '<div class="sh">Об источниках</div><p class="hint">«Поиск» работает на музыке Jamendo со свободными лицензиями. Понравившиеся песни сохраняются в «Моей музыке».</p>' +
+    '<div class="sh">' + __('Тема') + '</div><div class="seg">' + b('light', __('Светлая')) + b('dark', __('Тёмная')) + '</div>' +
+    '<div class="sh">' + __('Язык') + '</div><div class="seg">' + g('ru', 'Русский') + g('en', 'English') + '</div>' +
+    '<div class="sh">' + __('Как добавить песни') + '</div><p class="hint">' + __('Перешлите mp3-файлы боту в личные сообщения. Они появятся в «Моя музыка» примерно через минуту.') + '</p>' +
+    (!inTg && lsGet('tok') ? '<div class="sh">' + __('Аккаунт') + '</div><p class="hint" style="margin-bottom:10px">' + __('Вы вошли как {n}', { n: esc(lsGet('uname') || __('пользователь Telegram')) }) + '</p><button class="btn" data-act="logout">' + __('Выйти') + '</button>' : '') +
+    '<div class="sh">' + __('Об источниках') + '</div><p class="hint">' + __('«Поиск» работает на музыке Jamendo со свободными лицензиями. Понравившиеся песни сохраняются в «Моей музыке».') + '</p>' +
     '</div>';
+}
+function applyLang(l) {
+  lang = l === 'en' ? 'en' : 'ru';
+  document.documentElement.lang = lang;
+  document.title = __('Музыка');
+  document.querySelectorAll('[data-i18n]').forEach(el => { if (el.dataset.ru === undefined) el.dataset.ru = el.textContent; el.textContent = __(el.dataset.ru); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { if (el.dataset.ruPh === undefined) el.dataset.ruPh = el.placeholder; el.placeholder = __(el.dataset.ruPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { if (el.dataset.ruAria === undefined) el.dataset.ruAria = el.getAttribute('aria-label'); el.setAttribute('aria-label', __(el.dataset.ruAria)); });
+  updateChrome(); setProfile();
+  if (D && libState === 'ok') loadLib(); else render();
+}
+function setLang(v) {
+  applyLang(v);
+  lsSet('lang', lang); sSet('lang', lang);
 }
 
 let timer;
@@ -830,7 +1021,7 @@ $('q').addEventListener('keydown', e => {
 sGet('theme').then(v => { if (v && v !== theme) { applyTheme(v); render(); } });
 /* Вход через Telegram (вне Telegram) */
 async function logout() {
-  if (!(await ask('Выйти из аккаунта на этом устройстве?'))) return;
+  if (!(await ask(__('Выйти из аккаунта на этом устройстве?')))) return;
   try { await fetch(API + '/auth/logout?d=' + encodeURIComponent(lsGet('tok') || ''), { method: 'POST' }); } catch (e) {}
   lsDel('tok'); lsDel('uname'); location.reload();
 }
@@ -846,7 +1037,7 @@ async function checkLogin(code) {
 async function pollLogin(code) {
   if (polling) return;
   polling = true;
-  $('lstatus').textContent = 'Жду подтверждения в Telegram. После нажатия кнопки это может занять до минуты.';
+  $('lstatus').textContent = __('Жду подтверждения в Telegram. После нажатия кнопки это может занять до минуты.');
   $('lcheck').style.display = '';
   for (let i = 0; i < 400; i++) {
     const r = await checkLogin(code);
@@ -856,15 +1047,15 @@ async function pollLogin(code) {
   }
   polling = false;
   $('lcheck').style.display = 'none';
-  $('lstatus').textContent = 'Время вышло. Нажмите «Войти через Telegram» ещё раз.';
+  $('lstatus').textContent = __('Время вышло. Нажмите «Войти через Telegram» ещё раз.');
 }
 async function startLogin() {
   const st = $('lstatus');
-  st.textContent = 'Создаю ссылку для входа…';
+  st.textContent = __('Создаю ссылку для входа…');
   let j;
   try { j = await (await fetch(API + '/auth/start', { method: 'POST' })).json(); }
-  catch (e) { st.textContent = 'Нет связи с сервером. Проверьте интернет.'; return; }
-  if (!j.bot) { st.textContent = 'Сервер не смог создать ссылку. Попробуйте позже.'; return; }
+  catch (e) { st.textContent = __('Нет связи с сервером. Проверьте интернет.'); return; }
+  if (!j.bot) { st.textContent = __('Сервер не смог создать ссылку. Попробуйте позже.'); return; }
   const link = 'https://t.me/' + j.bot + '?start=login_' + j.code;
   lsSet('lcode', j.code);
   $('llink').href = link; $('llink').style.display = 'block';
@@ -874,10 +1065,10 @@ async function startLogin() {
 $('lbtn').onclick = startLogin;
 $('lcheck').onclick = async () => {
   const c = lsGet('lcode'); if (!c) return;
-  $('lstatus').textContent = 'Проверяю…';
+  $('lstatus').textContent = __('Проверяю…');
   const r = await checkLogin(c);
-  if (r === 'wait') $('lstatus').textContent = 'Подтверждение ещё не дошло. Подождите немного и нажмите снова.';
-  if (r === 'expired') $('lstatus').textContent = 'Время вышло. Нажмите «Войти через Telegram» ещё раз.';
+  if (r === 'wait') $('lstatus').textContent = __('Подтверждение ещё не дошло. Подождите немного и нажмите снова.');
+  if (r === 'expired') $('lstatus').textContent = __('Время вышло. Нажмите «Войти через Telegram» ещё раз.');
 };
 document.addEventListener('visibilitychange', () => {
   if (document.hidden || D) return;
@@ -891,6 +1082,9 @@ if (!D) {
 }
 if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
 
+const sys = ((tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || navigator.language || 'ru').toLowerCase();
+applyLang(lsGet('lang') || (sys.startsWith('ru') ? 'ru' : 'en'));
+sGet('lang').then(v => { if (v && v !== lang) applyLang(v); });
 restoreModes(lsGet('modes'));
 sGet('modes').then(v => { if (v) restoreModes(v); });
 go('lib');
