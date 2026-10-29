@@ -126,6 +126,11 @@ html,body,main{overscroll-behavior-y:contain}
 .drag{touch-action:none;cursor:grab}
 .row.dragging{background:var(--card);box-shadow:var(--sh);position:relative;z-index:3}
 .rbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px;padding:10px 12px;border-radius:14px;background:var(--soft);color:var(--hint);font-size:14px}
+#rdone{margin-left:auto}
+.drag{opacity:.55}
+.row.sel{background:rgba(124,77,255,.13);box-shadow:inset 0 0 0 2px var(--acc)}
+.row.sel .drag{color:var(--acc);opacity:1}
+.row.sel.dragging{background:var(--card);box-shadow:var(--sh),inset 0 0 0 2px var(--acc)}
 </style>
 </head>
 <body>
@@ -134,6 +139,7 @@ html,body,main{overscroll-behavior-y:contain}
     <div class="hbar">
       <button class="cb" id="menu" aria-label="Меню" data-i18n-aria><svg class="ic" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
       <div id="title">Моя музыка</div>
+      <button class="btn p" id="rdone" data-i18n style="display:none">Готово</button>
     </div>
     <input id="q" type="search" placeholder="Поиск по библиотеке" autocomplete="off">
     <div id="qhint" data-i18n>Показаны популярные песни. Начните вводить запрос, чтобы искать.</div>
@@ -368,7 +374,25 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return 
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
 const inTg = !!(tg && tg.initData);
-let D = encodeURIComponent((tg && tg.initData) || lsGet('tok') || '');
+const RAW = (tg && tg.initData) || lsGet('tok') || '';
+let D = encodeURIComponent(RAW);
+function apiFetch(path, init) {
+  const h = { ...((init && init.headers) || {}), Authorization: 'Bearer ' + RAW };
+  return fetch(API + path, { ...init, headers: h });
+}
+let MT = '', MT_EXP = 0, mediaP = null;
+function refreshMedia() {
+  if (!RAW) return Promise.resolve();
+  mediaP = apiFetch('/api/media-token').then(r => r.json())
+    .then(j => { if (j.m) { MT = j.m; MT_EXP = j.exp * 1000; } })
+    .catch(() => {}).then(() => { mediaP = null; });
+  return mediaP;
+}
+function ensureMedia() {
+  if (MT && MT_EXP - Date.now() > 3600000) return Promise.resolve();
+  return mediaP || refreshMedia();
+}
+const mq = () => MT ? '?m=' + MT : '?d=' + D;
 let tab = 'lib', results = [], lib = [], libState = 'idle', popular = [], popState = 'idle';
 let queue = [], idx = -1, hist = [], errs = 0, reqId = 0, seeking = false;
 let upNext = [], order = [], played = new Set();
@@ -388,7 +412,7 @@ async function toggleExt(t) {
   if (inLib(t)) {
     if (!(await ask(__('Убрать «{n}» из «Моей музыки»?', { n: t.name })))) return;
     lib = lib.filter(x => x.rid !== rid); render();
-    try { await fetch(API + '/api/delete?id=' + encodeURIComponent(rid) + '&d=' + D, { method: 'POST' }); } catch (e) {}
+    try { await apiFetch('/api/delete?id=' + encodeURIComponent(rid), { method: 'POST' }); } catch (e) {}
     return;
   }
   lib.unshift({ id: 'L' + rid, rid, name: t.name, artist: t.artist || unk(), image: t.image || '', audio: t.audio, dur: t.dur, lib: true, ext: true });
@@ -445,15 +469,16 @@ async function loadLib() {
   if (!D) { libState = 'noauth'; render(); return; }
   libState = 'loading'; render();
   try {
-    const r = await fetch(API + '/api/tracks?d=' + D);
+    await ensureMedia();
+    const r = await apiFetch('/api/tracks');
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     lib = j.tracks.map(t => t.ext
       ? { id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || unk(), lib: true, ext: true, dur: t.dur, image: t.image || '', audio: t.audio }
       : {
         id: 'L' + t.id, rid: t.id, name: t.title, artist: t.artist || unk(), lib: true, dur: t.dur,
-        image: t.cover ? API + '/api/cover/' + encodeURIComponent(t.id) + '?d=' + D : '',
-        audio: API + '/api/audio/' + encodeURIComponent(t.id) + '?d=' + D
+        get image() { return t.cover ? API + '/api/cover/' + encodeURIComponent(t.id) + mq() : ''; },
+        get audio() { return API + '/api/audio/' + encodeURIComponent(t.id) + mq(); }
       });
     libState = 'ok';
   } catch (e) { libState = 'error'; }
@@ -464,7 +489,7 @@ async function delTrack(t) {
   const q = __('Удалить «{n}» из библиотеки?', { n: t.name });
   const ok = await new Promise(r => { try { tg.showConfirm(q, r); } catch (e) { r(confirm(q)); } });
   if (!ok) return;
-  try { await fetch(API + '/api/delete?id=' + encodeURIComponent(t.rid) + '&d=' + D, { method: 'POST' }); } catch (e) {}
+  try { await apiFetch('/api/delete?id=' + encodeURIComponent(t.rid), { method: 'POST' }); } catch (e) {}
   lib = lib.filter(x => x.id !== t.id);
   render();
 }
@@ -473,9 +498,9 @@ async function delTrack(t) {
 const pn = n => lang === 'en' ? n + (n === 1 ? ' song' : ' songs') : n + ' ' + (n % 10 === 1 && n % 100 !== 11 ? 'песня' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'песни' : 'песен');
 const plTracks = p => p.tracks.map(id => lib.find(t => t.rid === id)).filter(Boolean);
 const curPlObj = () => playlists.find(p => p.id === curPl);
-const plCover = p => p.cover ? API + '/api/pl/cover/' + encodeURIComponent(p.id) + '?d=' + D + '&v=' + p.cover : NOCOVER;
+const plCover = p => p.cover ? API + '/api/pl/cover/' + encodeURIComponent(p.id) + mq() + '&v=' + p.cover : NOCOVER;
 const gripSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg>';
-let reorder = false, noClickUntil = 0, drag = null, lp = null;
+let reorder = false, noClickUntil = 0, drag = null, lp = null, selId = null;
 const dotsSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>';
 const backSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
 const penSvg = '<svg class="f" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
@@ -521,10 +546,10 @@ function render(emptyMsg) {
   const data = current(), el = $('list');
   const curId = queue[idx] ? queue[idx].id : null;
   const head = p ? '<div class="plhead"><button class="ib" data-act="back" aria-label="' + __('Назад') + '">' + backSvg + '</button><img class="cv" alt="" src="' + esc(plCover(p)) + '"><div class="tx"><div class="nm">' + esc(p.name) + '</div><div class="s">' + pn(data.length) + '</div></div><button class="ib" data-act="editpl" aria-label="' + __('Изменить') + '">' + penSvg + '</button></div>' : '';
-  const btns = reorder ? '<div class="rbar"><span>' + __('Перетащите ≡, чтобы изменить порядок') + '</span><button class="btn p" data-act="done">' + __('Готово') + '</button></div>' : data.length && (tab === 'lib' || tab === 'pl') ? '<div class="pbtns"><button class="p" data-act="playall">' + playIc + __('Играть') + '</button><button data-act="shuf">' + shufIc + __('Перемешать') + '</button></div>' : '';
+  const btns = data.length && (tab === 'lib' || tab === 'pl') ? '<div class="pbtns"><button class="p" data-act="playall">' + playIc + __('Играть') + '</button><button data-act="shuf">' + shufIc + __('Перемешать') + '</button></div>' : '';
   if (!data.length) { el.innerHTML = head + '<div class="msg">' + esc(emptyText(emptyMsg)) + '</div>'; return; }
   el.innerHTML = head + btns + data.map((t, i) =>
-    '<div class="row' + (t.id === curId ? ' cur' : '') + '" data-i="' + i + '">' +
+    '<div class="row' + (t.id === curId ? ' cur' : '') + (reorder && t.id === selId ? ' sel' : '') + '" data-i="' + i + '" data-id="' + esc(t.id) + '">' +
       '<img class="cv" loading="lazy" alt="" src="' + esc(t.image || NOCOVER) + '">' +
       '<div class="tx"><div class="t">' + esc(t.name) + '</div><div class="s">' + esc(t.artist) + (t.dur ? ' · ' + fmt(t.dur) : '') + '</div></div>' +
       (reorder ? '<button class="ib drag">' + gripSvg + '</button>' : t.lib
@@ -534,7 +559,11 @@ function render(emptyMsg) {
 }
 $('list').addEventListener('click', e => {
   if (Date.now() < noClickUntil) return;
-  if (reorder && !e.target.closest('[data-act]')) return;
+  if (reorder && !e.target.closest('[data-act]')) {
+    const rr = e.target.closest('.row[data-id]');
+    if (rr) selectRow(rr.dataset.id);
+    return;
+  }
   const th = e.target.closest('[data-tm]');
   if (th) { setTheme(th.dataset.tm); return; }
   const lg = e.target.closest('[data-lang]');
@@ -554,26 +583,34 @@ $('list').addEventListener('click', e => {
 
 /* Порядок песен: долгое нажатие и перетаскивание */
 const canReorder = () => (tab === 'lib' && !$('q').value.trim() && libState === 'ok' && lib.length > 1) || (tab === 'pl' && !!curPlObj() && current().length > 1);
-function enterReorder() {
-  if (!canReorder() || reorder) return;
-  reorder = true; noClickUntil = Date.now() + 700;
-  if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {} }
-  render();
+function syncDone() { $('rdone').style.display = reorder ? '' : 'none'; }
+function selectRow(id) {
+  selId = id;
+  document.querySelectorAll('#list .row[data-id]').forEach(r => r.classList.toggle('sel', r.dataset.id === id));
 }
-function exitReorder() { reorder = false; render(); }
+function enterReorder(id) {
+  if (!canReorder() || reorder) return;
+  reorder = true; selId = id || null;
+  if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {} }
+  syncDone(); toast(__('Перетащите ≡, чтобы изменить порядок')); render();
+}
+function exitReorder() { reorder = false; selId = null; syncDone(); render(); }
+$('rdone').onclick = exitReorder;
 $('list').addEventListener('contextmenu', e => { if (e.target.closest('.row')) e.preventDefault(); });
 $('list').addEventListener('pointerdown', e => {
   const h = e.target.closest('.drag');
   if (h) {
     const row = h.closest('.row');
     drag = { row, grab: e.clientY - row.getBoundingClientRect().top };
-    row.classList.add('dragging');
+    row.classList.add('dragging'); selectRow(row.dataset.id);
     e.preventDefault();
     return;
   }
   if (reorder || e.target.closest('button') || !canReorder()) return;
-  if (!e.target.closest('.row[data-i]')) return;
-  lp = { x: e.clientX, y: e.clientY, t: setTimeout(() => { lp = null; enterReorder(); }, 550) };
+  const rowEl = e.target.closest('.row[data-i]');
+  if (!rowEl) return;
+  const rid0 = rowEl.dataset.id;
+  lp = { x: e.clientX, y: e.clientY, t: setTimeout(() => { lp = null; enterReorder(rid0); }, 550) };
 });
 window.addEventListener('pointermove', e => {
   if (lp && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 10) { clearTimeout(lp.t); lp = null; }
@@ -677,7 +714,8 @@ function removeFromPl(t) {
   p.tracks = p.tracks.filter(id => id !== t.rid); savePl(p);
 }
 async function apiPost(path, body, q) {
-  const r = await fetch(API + path + '?' + (q || '') + 'd=' + D, { method: 'POST', body });
+  const qs = q ? '?' + q.replace(/&$/, '') : '';
+  const r = await apiFetch(path + qs, { method: 'POST', body });
   return r.json();
 }
 async function savePl(p) {
@@ -688,7 +726,7 @@ async function savePl(p) {
 async function loadPlaylists() {
   if (!D) { plState = 'ok'; return; }
   plState = 'loading'; render();
-  try { const j = await (await fetch(API + '/api/pl?d=' + D)).json(); playlists = j.playlists || []; plState = 'ok'; }
+  try { await ensureMedia(); const j = await (await apiFetch('/api/pl')).json(); playlists = j.playlists || []; plState = 'ok'; }
   catch (e) { plState = 'error'; }
   render();
 }
@@ -768,6 +806,7 @@ let failed = null;
 function load() {
   const t = queue[idx]; if (!t) return;
   played.add(t); failed = null;
+  if (RAW && !mediaP && MT_EXP - Date.now() < 7200000) refreshMedia();
   audio.pause();
   audio.src = t.audio; audio.loop = repeat;
   audio.play().catch(() => {});
@@ -808,9 +847,10 @@ function prev() {
   idx = t && queue.includes(t) ? queue.indexOf(t) : (idx - 1 + queue.length) % queue.length;
   load();
 }
-function retryCurrent() {
+async function retryCurrent() {
   const t = queue[idx]; if (!t) return;
   const pos = failed ? failed.pos : 0; failed = null;
+  await Promise.race([refreshMedia(), new Promise(r => setTimeout(r, 4000))]);
   audio.src = t.audio;
   audio.addEventListener('loadedmetadata', () => { if (pos > 1) audio.currentTime = pos; }, { once: true });
   audio.play().catch(() => {});
@@ -821,6 +861,7 @@ function toggle() {
   if (audio.paused) audio.play().catch(() => {}); else audio.pause();
 }
 window.addEventListener('online', () => { if (failed && failed.t === queue[idx]) retryCurrent(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ensureMedia(); });
 function setIcon(p) {
   const d = p ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
   $('ppi').innerHTML = d; $('fppi').innerHTML = d;
@@ -879,7 +920,7 @@ $('esave').onclick = async () => {
   t.name = n; t.artist = a || unk();
   $('dlg').classList.remove('show');
   show(); render();
-  try { await fetch(API + '/api/edit?id=' + encodeURIComponent(t.rid) + '&t=' + encodeURIComponent(n) + '&a=' + encodeURIComponent(a) + '&d=' + D, { method: 'POST' }); } catch (e) {}
+  try { await apiFetch('/api/edit?id=' + encodeURIComponent(t.rid) + '&t=' + encodeURIComponent(n) + '&a=' + encodeURIComponent(a), { method: 'POST' }); } catch (e) {}
 };
 
 /* Меню, разделы, тема */
@@ -892,7 +933,7 @@ function updateChrome() {
 }
 function go(v, id) {
   tab = v;
-  reorder = false;
+  reorder = false; selId = null; syncDone();
   if (v === 'pl') curPl = id;
   const p = v === 'pl' ? curPlObj() : null;
   updateChrome();
@@ -1022,7 +1063,7 @@ sGet('theme').then(v => { if (v && v !== theme) { applyTheme(v); render(); } });
 /* Вход через Telegram (вне Telegram) */
 async function logout() {
   if (!(await ask(__('Выйти из аккаунта на этом устройстве?')))) return;
-  try { await fetch(API + '/auth/logout?d=' + encodeURIComponent(lsGet('tok') || ''), { method: 'POST' }); } catch (e) {}
+  try { await fetch(API + '/auth/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + (lsGet('tok') || '') } }); } catch (e) {}
   lsDel('tok'); lsDel('uname'); location.reload();
 }
 let polling = false;
