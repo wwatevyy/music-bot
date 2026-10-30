@@ -659,12 +659,13 @@ function saveModes() { const m = JSON.stringify({ shuffle, repeat }); lsSet('mod
 function restoreModes(v) {
   try {
     const m = JSON.parse(v);
-    shuffle = !!m.shuffle; repeat = !!m.repeat; audio.loop = repeat;
+    shuffle = !!m.shuffle; repeat = !!m.repeat && !shuffle; audio.loop = repeat;
     $('sh').classList.toggle('on', shuffle); $('rp').classList.toggle('on', repeat);
   } catch (e) {}
 }
 function setShuffle(v) {
   shuffle = v; $('sh').classList.toggle('on', v);
+  if (v && repeat) { repeat = false; audio.loop = false; $('rp').classList.remove('on'); }
   if (v && queue.length) buildOrder(); else order = [];
   saveModes();
 }
@@ -802,14 +803,14 @@ function play(list, i) {
   if (shuffle) buildOrder();
   load();
 }
-let failed = null;
+let failed = null, switching = false;
 function load() {
   const t = queue[idx]; if (!t) return;
   played.add(t); failed = null;
   if (RAW && !mediaP && MT_EXP - Date.now() < 7200000) refreshMedia();
-  audio.pause();
+  switching = true;
   audio.src = t.audio; audio.loop = repeat;
-  audio.play().catch(() => {});
+  audio.play().catch(() => { switching = false; setIcon(!audio.paused); });
   $('mini').classList.add('show');
   $('seek').value = 0; $('mseek').value = 0; $('cur').textContent = '0:00';
   show(); render();
@@ -833,7 +834,7 @@ function next() {
   else if (shuffle && queue.length > 1) {
     if (!order.length) buildOrder();
     t = order.pop();
-    if (!t) { audio.pause(); toast(__('Все песни сыграны. Выберите песню или нажмите «Перемешать»')); return; }
+    if (!t) { audio.pause(); switching = false; setIcon(false); toast(__('Все песни сыграны. Выберите песню или нажмите «Перемешать»')); return; }
   } else t = queue[(idx + 1) % queue.length];
   hist.push(queue[idx]); if (hist.length > 50) hist.shift();
   if (!queue.includes(t)) queue.splice(idx + 1, 0, t);
@@ -874,15 +875,19 @@ $('fpp').onclick = toggle;
 $('next').onclick = next;
 $('prev').onclick = prev;
 $('sh').onclick = () => setShuffle(!shuffle);
-$('rp').onclick = () => { repeat = !repeat; audio.loop = repeat; $('rp').classList.toggle('on', repeat); saveModes(); };
+$('rp').onclick = () => {
+  repeat = !repeat; audio.loop = repeat; $('rp').classList.toggle('on', repeat);
+  if (repeat && shuffle) { shuffle = false; order = []; $('sh').classList.remove('on'); }
+  saveModes();
+};
 $('mini').onclick = e => { if (!e.target.closest('button,input')) $('full').classList.add('open'); };
 $('close').onclick = () => $('full').classList.remove('open');
 audio.onplay = () => setIcon(true);
-audio.onpause = () => setIcon(false);
-audio.onplaying = () => { audio.muted = false; };
+audio.onpause = () => { if (!switching) setIcon(false); };
+audio.onplaying = () => { switching = false; audio.muted = false; setIcon(true); };
 audio.onended = () => next();
 audio.onerror = () => {
-  audio.muted = false;
+  switching = false; audio.muted = false;
   if (!queue[idx]) return;
   setIcon(false);
   failed = { t: queue[idx], pos: audio.currentTime || 0 };
