@@ -808,7 +808,7 @@ function load() {
   const t = queue[idx]; if (!t) return;
   played.add(t); failed = null;
   if (RAW && !mediaP && MT_EXP - Date.now() < 7200000) refreshMedia();
-  switching = true;
+  switching = true; audio.volume = 0;
   audio.src = t.audio; audio.loop = repeat;
   audio.play().catch(() => { switching = false; setIcon(!audio.paused); });
   $('mini').classList.add('show');
@@ -852,7 +852,7 @@ async function retryCurrent() {
   const t = queue[idx]; if (!t) return;
   const pos = failed ? failed.pos : 0; failed = null;
   await Promise.race([refreshMedia(), new Promise(r => setTimeout(r, 4000))]);
-  audio.src = t.audio;
+  audio.volume = 1; audio.src = t.audio;
   audio.addEventListener('loadedmetadata', () => { if (pos > 1) audio.currentTime = pos; }, { once: true });
   audio.play().catch(() => {});
 }
@@ -885,15 +885,16 @@ $('close').onclick = () => $('full').classList.remove('open');
 audio.onplay = () => setIcon(true);
 audio.onpause = () => { if (!switching) setIcon(false); };
 audio.onplaying = () => { switching = false; audio.muted = false; setIcon(true); };
-audio.onended = () => next();
+audio.onended = () => { audio.volume = 1; next(); };
 audio.onerror = () => {
-  switching = false; audio.muted = false;
+  switching = false; audio.muted = false; audio.volume = 1;
   if (!queue[idx]) return;
   setIcon(false);
   failed = { t: queue[idx], pos: audio.currentTime || 0 };
   toast(__(navigator.onLine ? 'Не удалось загрузить песню. Нажмите ▶, чтобы повторить.' : 'Нет соединения. Песня продолжится, когда связь вернётся.'));
 };
 audio.ontimeupdate = () => {
+  if (audio.volume < 1 && audio.currentTime > 0.05) audio.volume = 1;
   if (!audio.duration || seeking) return;
   const p = audio.currentTime / audio.duration * 100;
   $('seek').value = p; $('mseek').value = p;
