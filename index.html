@@ -398,8 +398,46 @@ let queue = [], idx = -1, hist = [], errs = 0, reqId = 0, seeking = false;
 let upNext = [], order = [], played = new Set();
 let playlists = [], plState = 'idle', curPl = null, pendingCover = null, pendingAdd = null, plEditId = null, sheetItems = [];
 let shuffle = false, repeat = false;
-const audio = new Audio();
+let audio = new Audio();
 audio.preload = 'none';
+const audioPlain = audio;
+let audioFx = null, actx = null, gainN = null, fadeNew = false, fxTried = false;
+function initFx() {
+  if (fxTried) return; fxTried = true;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const el = new Audio(); el.preload = 'none'; el.crossOrigin = 'anonymous';
+    const c = new AC(); const src = c.createMediaElementSource(el);
+    const g = c.createGain(); src.connect(g); g.connect(c.destination);
+    audioFx = el; actx = c; gainN = g;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+  } catch (e) { audioFx = null; }
+}
+function fxStart() {
+  if (!gainN) return;
+  try { const t = actx.currentTime; gainN.gain.cancelScheduledValues(t); gainN.gain.setValueAtTime(0, t); } catch (e) {}
+  fadeNew = true;
+}
+function fxPlaying() {
+  if (!gainN) return;
+  try {
+    if (actx.state !== 'running') actx.resume().catch(() => {});
+    if (fadeNew) {
+      fadeNew = false;
+      const t = actx.currentTime;
+      gainN.gain.cancelScheduledValues(t);
+      gainN.gain.setValueAtTime(0, t);
+      gainN.gain.setValueAtTime(0, t + 0.2);
+      gainN.gain.linearRampToValueAtTime(1, t + 0.6);
+    }
+  } catch (e) {}
+}
+function fxOpen() {
+  if (!gainN) return;
+  try { const t = actx.currentTime; gainN.gain.cancelScheduledValues(t); gainN.gain.setValueAtTime(1, t); } catch (e) {}
+  fadeNew = false;
+}
 const slim = t => ({ id: String(t.id), name: t.name, artist: t.artist_name || t.artist, image: t.image, audio: t.audio, dur: t.duration || t.dur });
 const SITE_ICON = 'https://wwatevyy.github.io/music-bot/icon-192.png';
 
@@ -803,13 +841,17 @@ function play(list, i) {
   if (shuffle) buildOrder();
   load();
 }
-let failed = null, switching = false, gate = false;
-const MUTE_UNTIL = 1.5, FADE = 0.5;
+let failed = null, switching = false;
 function load() {
   const t = queue[idx]; if (!t) return;
   played.add(t); failed = null;
   if (RAW && !mediaP && MT_EXP - Date.now() < 7200000) refreshMedia();
-  switching = true; gate = true; audio.volume = 0;
+  switching = true;
+  const own = String(t.audio).startsWith(API);
+  if (own) { initFx(); bindFx(); }
+  const want = own && audioFx ? audioFx : audioPlain;
+  if (want !== audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); audio = want; }
+  if (audio === audioFx) fxStart();
   audio.src = t.audio; audio.loop = repeat;
   audio.play().catch(() => { switching = false; setIcon(!audio.paused); });
   $('mini').classList.add('show');
@@ -853,7 +895,7 @@ async function retryCurrent() {
   const t = queue[idx]; if (!t) return;
   const pos = failed ? failed.pos : 0; failed = null;
   await Promise.race([refreshMedia(), new Promise(r => setTimeout(r, 4000))]);
-  audio.volume = 1; gate = false; audio.src = t.audio;
+  audio.src = t.audio;
   audio.addEventListener('loadedmetadata', () => { if (pos > 1) audio.currentTime = pos; }, { once: true });
   audio.play().catch(() => {});
 }
@@ -863,7 +905,7 @@ function toggle() {
   if (audio.paused) audio.play().catch(() => {}); else audio.pause();
 }
 window.addEventListener('online', () => { if (failed && failed.t === queue[idx]) retryCurrent(); });
-document.addEventListener('visibilitychange', () => { if (!document.hidden) ensureMedia(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { ensureMedia(); if (actx && actx.state !== 'running') actx.resume().catch(() => {}); } });
 function setIcon(p) {
   const d = p ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
   $('ppi').innerHTML = d; $('fppi').innerHTML = d;
@@ -885,28 +927,31 @@ $('mini').onclick = e => { if (!e.target.closest('button,input')) $('full').clas
 $('close').onclick = () => $('full').classList.remove('open');
 audio.onplay = () => setIcon(true);
 audio.onpause = () => { if (!switching) setIcon(false); };
-audio.onplaying = () => { switching = false; audio.muted = false; setIcon(true); };
-audio.onended = () => { audio.volume = 1; gate = false; next(); };
+audio.onplaying = () => { switching = false; audio.muted = false; setIcon(true); if (audio === audioFx) fxPlaying(); };
+audio.onended = () => next();
 audio.onerror = () => {
-  switching = false; audio.muted = false; audio.volume = 1; gate = false;
+  switching = false; audio.muted = false;
   if (!queue[idx]) return;
   setIcon(false);
   failed = { t: queue[idx], pos: audio.currentTime || 0 };
   toast(__(navigator.onLine ? 'Не удалось загрузить песню. Нажмите ▶, чтобы повторить.' : 'Нет соединения. Песня продолжится, когда связь вернётся.'));
 };
 audio.ontimeupdate = () => {
-  if (gate) {
-    const ct = audio.currentTime;
-    if (ct < MUTE_UNTIL) audio.volume = 0;
-    else if (ct < MUTE_UNTIL + FADE) audio.volume = Math.min(1, (ct - MUTE_UNTIL) / FADE);
-    else { audio.volume = 1; gate = false; }
-  }
+  if (fadeNew && audio === audioFx && audio.currentTime > 1) fxOpen();
   if (!audio.duration || seeking) return;
   const p = audio.currentTime / audio.duration * 100;
   $('seek').value = p; $('mseek').value = p;
   $('cur').textContent = fmt(audio.currentTime); $('dur').textContent = fmt(audio.duration);
   if ('mediaSession' in navigator) { try { navigator.mediaSession.setPositionState({ duration: audio.duration, position: audio.currentTime, playbackRate: 1 }); } catch (e) {} }
 };
+function bindFx() {
+  if (!audioFx || audioFx.onplay) return;
+  ['onplay', 'onpause', 'onplaying', 'onended', 'onerror', 'ontimeupdate'].forEach(k => {
+    const h = audioPlain[k];
+    const w = e => { if (e.target === audio) h(e); };
+    audioFx[k] = w; audioPlain[k] = w;
+  });
+}
 ['seek', 'mseek'].forEach(id => {
   const el = $(id);
   el.oninput = () => { seeking = true; $('seek').value = $('mseek').value = el.value; if (audio.duration) $('cur').textContent = fmt(el.value / 100 * audio.duration); };
