@@ -428,8 +428,8 @@ function fxPlaying() {
       const t = actx.currentTime;
       gainN.gain.cancelScheduledValues(t);
       gainN.gain.setValueAtTime(0, t);
-      gainN.gain.setValueAtTime(0, t + 0.2);
-      gainN.gain.linearRampToValueAtTime(1, t + 0.6);
+      gainN.gain.setValueAtTime(0, t + 0.12);
+      gainN.gain.linearRampToValueAtTime(1, t + 0.32);
     }
   } catch (e) {}
 }
@@ -865,10 +865,10 @@ function load() {
       const n = actx.currentTime;
       gainN.gain.cancelScheduledValues(n);
       gainN.gain.setValueAtTime(gainN.gain.value, n);
-      gainN.gain.linearRampToValueAtTime(0, n + 0.04);
+      gainN.gain.linearRampToValueAtTime(0, n + 0.03);
       const o = actx.createOscillator(); const z = actx.createGain();
       z.gain.value = 0; o.connect(z); z.connect(actx.destination);
-      o.onended = go; o.start(); o.stop(n + 0.045);
+      o.onended = go; o.start(); o.stop(n + 0.035);
       setTimeout(go, 250);
       faded = true;
     } catch (e) { faded = false; }
