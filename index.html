@@ -841,12 +841,8 @@ function play(list, i) {
   if (shuffle) buildOrder();
   load();
 }
-let failed = null, switching = false;
-function load() {
-  const t = queue[idx]; if (!t) return;
-  played.add(t); failed = null;
-  if (RAW && !mediaP && MT_EXP - Date.now() < 7200000) refreshMedia();
-  switching = true;
+let failed = null, switching = false, loadTok = 0;
+function startAudio(t) {
   const own = String(t.audio).startsWith(API);
   if (own) { initFx(); bindFx(); }
   const want = own && audioFx ? audioFx : audioPlain;
@@ -854,6 +850,30 @@ function load() {
   if (audio === audioFx) fxStart();
   audio.src = t.audio; audio.loop = repeat;
   audio.play().catch(() => { switching = false; setIcon(!audio.paused); });
+}
+function load() {
+  const t = queue[idx]; if (!t) return;
+  played.add(t); failed = null;
+  if (RAW && !mediaP && MT_EXP - Date.now() < 7200000) refreshMedia();
+  switching = true;
+  const tok = ++loadTok;
+  let done = false;
+  const go = () => { if (done || tok !== loadTok) return; done = true; startAudio(t); };
+  let faded = false;
+  if (audio === audioFx && gainN && actx && !audio.paused && !document.hidden) {
+    try {
+      const n = actx.currentTime;
+      gainN.gain.cancelScheduledValues(n);
+      gainN.gain.setValueAtTime(gainN.gain.value, n);
+      gainN.gain.linearRampToValueAtTime(0, n + 0.04);
+      const o = actx.createOscillator(); const z = actx.createGain();
+      z.gain.value = 0; o.connect(z); z.connect(actx.destination);
+      o.onended = go; o.start(); o.stop(n + 0.045);
+      setTimeout(go, 250);
+      faded = true;
+    } catch (e) { faded = false; }
+  }
+  if (!faded) go();
   $('mini').classList.add('show');
   $('seek').value = 0; $('mseek').value = 0; $('cur').textContent = '0:00';
   show(); render();
