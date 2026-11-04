@@ -1108,6 +1108,7 @@ function renderSettings() {
     '<div class="sh">' + __('Как добавить песни') + '</div><p class="hint">' + __('Перешлите mp3-файлы боту в личные сообщения. Они появятся в «Моя музыка» примерно через минуту.') + '</p>' +
     (!inTg && lsGet('tok') ? '<div class="sh">' + __('Аккаунт') + '</div><p class="hint" style="margin-bottom:10px">' + __('Вы вошли как {n}', { n: esc(lsGet('uname') || __('пользователь Telegram')) }) + '</p><button class="btn" data-act="logout">' + __('Выйти') + '</button>' : '') +
     '<div class="sh">' + __('Об источниках') + '</div><p class="hint">' + __('«Поиск» работает на музыке Jamendo со свободными лицензиями. Понравившиеся песни сохраняются в «Моей музыке».') + '</p>' +
+    '<p class="hint" style="opacity:.5;font-size:11px;margin-top:18px">audio: ' + (audio === audioFx ? 'fx' : 'plain') + (actx ? ' / ' + actx.state : '') + (fxTried && !audioFx ? ' / fx-failed' : '') + ' / fade2</p>' +
     '</div>';
 }
 function applyLang(l) {
